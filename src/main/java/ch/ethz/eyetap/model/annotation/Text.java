@@ -17,7 +17,7 @@ public class Text {
     @Column(name = "id", nullable = false)
     private Long id;
 
-    @Column(name = "title")
+    @Column(name = "title", unique = true)
     private String title;
 
     @OneToMany(mappedBy = "text", orphanRemoval = true)

@@ -22,7 +22,7 @@ public class Annotator {
     @GeneratedValue(strategy = GenerationType.AUTO)
     private Long id;
 
-    @OneToMany(mappedBy = "annotator", orphanRemoval = true)
+    @OneToMany(mappedBy = "annotator", orphanRemoval = true, fetch = FetchType.EAGER)
     private Set<AnnotationSession> annotationSessions = new LinkedHashSet<>();
 
     @OneToOne(optional = false, orphanRemoval = true)

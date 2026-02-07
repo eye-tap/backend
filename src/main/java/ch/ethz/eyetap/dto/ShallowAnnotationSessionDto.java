@@ -10,10 +10,9 @@ import java.util.Set;
  * DTO for {@link AnnotationSession}
  */
 @Value
-public class AnnotationSessionDto implements Serializable {
+public class ShallowAnnotationSessionDto implements Serializable {
     Long id;
     Long annotator;
-    Set<AnnotationDto> annotations;
     AnnotationsMetaDataDto annotationsMetaData;
     ShallowReadingSessionDto readingSession;
 }

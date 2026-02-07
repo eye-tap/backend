@@ -1,7 +1,12 @@
 package ch.ethz.eyetap.controller;
 
+import ch.ethz.eyetap.EntityMapper;
 import ch.ethz.eyetap.dto.AnnotationSessionDto;
+import ch.ethz.eyetap.dto.AnnotationsMetaDataDto;
+import ch.ethz.eyetap.dto.ShallowAnnotationSessionDto;
 import ch.ethz.eyetap.model.User;
+import ch.ethz.eyetap.model.annotation.AnnotationSession;
+import ch.ethz.eyetap.service.AnnotationSessionService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -17,8 +22,11 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class AnnotationSessionController {
 
+    private final AnnotationSessionService annotationSessionService;
+    private final EntityMapper entityMapper;
+
     @GetMapping
-    public Set<AnnotationSessionDto> getSessions(
+    public Set<ShallowAnnotationSessionDto> getSessions(
             @AuthenticationPrincipal User user
     ) {
         // Get roles/authorities of the current user
@@ -30,6 +38,17 @@ public class AnnotationSessionController {
         System.out.println("Current user: " + user.getUsername());
         System.out.println("Roles: " + roles);
 
-        return Set.of(); // TODO: map user sessions
+        return this.annotationSessionService.getAnnotationSessionsByUser(user).stream()
+                .map(session -> {
+                    AnnotationsMetaDataDto meta = this.annotationSessionService.calculateAnnotationsMetaData(session);
+                    return new ShallowAnnotationSessionDto(
+                            session.getId(),
+                            session.getAnnotator().getId(),
+                            meta,
+                            this.entityMapper.toShallowReadingSessionDto(session.getReadingSession())
+                    );
+                }).collect(Collectors.toSet());
+
     }
+
 }

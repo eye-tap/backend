@@ -4,4 +4,5 @@ import ch.ethz.eyetap.model.annotation.Text;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface TextRepository extends JpaRepository<Text, Long> {
+    boolean existsByTitle(String title);
 }

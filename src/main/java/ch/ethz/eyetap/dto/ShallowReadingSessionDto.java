@@ -12,5 +12,6 @@ import java.io.Serializable;
 public class ShallowReadingSessionDto implements Serializable {
     Long id;
     Long reader;
-    Long text;
+    Long textId;
+    String textTitle;
 }

@@ -23,11 +23,12 @@ public class AuthService {
     private final PasswordEncoder encoder;
     private final PasswordGeneratorService passwordGeneratorService;
 
-    public String signup(String email, String password) {
+    public String signup(String username, String email, String password) {
         if (this.userRepository.findByEmail(email).isPresent()) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Email already in use");
         }
         User user = new User();
+        user.setUsername(username);
         user.setEmail(email);
         user = createAnnotator(password, user, "SURVEY_ADMIN");
 
@@ -51,7 +52,7 @@ public class AuthService {
 
     public String createSurveyParticipant(String userName) {
         User user = new User();
-        user.setEmail(userName);
+        user.setUsername(userName);
         String password = this.passwordGeneratorService.genPassword(8);
         createAnnotator(password, user, "SURVEY_PARTICIPANT");
         return password;
