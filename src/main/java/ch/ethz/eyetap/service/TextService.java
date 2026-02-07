@@ -1,7 +1,7 @@
 package ch.ethz.eyetap.service;
 
 import ch.ethz.eyetap.EntityMapper;
-import ch.ethz.eyetap.model.Text;
+import ch.ethz.eyetap.model.annotation.Text;
 import ch.ethz.eyetap.dto.TextDto;
 import ch.ethz.eyetap.repository.TextRepository;
 import lombok.RequiredArgsConstructor;

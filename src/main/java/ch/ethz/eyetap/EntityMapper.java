@@ -1,7 +1,7 @@
 package ch.ethz.eyetap;
 
 import ch.ethz.eyetap.dto.TextDto;
-import ch.ethz.eyetap.model.Text;
+import ch.ethz.eyetap.model.annotation.Text;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 

@@ -1,6 +1,6 @@
 package ch.ethz.eyetap.service;
 
-import ch.ethz.eyetap.model.*;
+import ch.ethz.eyetap.model.annotation.*;
 import ch.ethz.eyetap.repository.AnnotationRepository;
 import ch.ethz.eyetap.repository.AnnotationSessionRepository;
 import lombok.RequiredArgsConstructor;

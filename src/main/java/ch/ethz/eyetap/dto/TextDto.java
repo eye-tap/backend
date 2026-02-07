@@ -1,6 +1,6 @@
 package ch.ethz.eyetap.dto;
 
-import ch.ethz.eyetap.model.Text;
+import ch.ethz.eyetap.model.annotation.Text;
 import lombok.Value;
 
 import java.io.Serializable;

@@ -1,4 +1,4 @@
-package ch.ethz.eyetap.model;
+package ch.ethz.eyetap.model.annotation;
 
 import jakarta.persistence.*;
 import lombok.Getter;

@@ -1,6 +1,6 @@
 package ch.ethz.eyetap.service;
 
-import ch.ethz.eyetap.model.Annotator;
+import ch.ethz.eyetap.model.annotation.Annotator;
 import ch.ethz.eyetap.model.User;
 import ch.ethz.eyetap.repository.AnnotatorRepository;
 import ch.ethz.eyetap.repository.UserRepository;
@@ -21,6 +21,7 @@ public class AuthService {
     private final UserRepository userRepository;
     private final AnnotatorRepository annotatorRepository;
     private final PasswordEncoder encoder;
+    private final PasswordGeneratorService passwordGeneratorService;
 
     public String signup(String email, String password) {
         if (this.userRepository.findByEmail(email).isPresent()) {
@@ -28,7 +29,14 @@ public class AuthService {
         }
         User user = new User();
         user.setEmail(email);
+        user = createAnnotator(password, user, "SURVEY_ADMIN");
+
+        return jwtService.generateToken(user);
+    }
+
+    private User createAnnotator(String password, User user, String role) {
         user.setPassword(encoder.encode(password));
+        user.setRole(role);
 
         user = this.userRepository.save(user);
 
@@ -38,8 +46,15 @@ public class AuthService {
 
         user.setAnnotator(annotator);
         user = this.userRepository.save(user);
+        return user;
+    }
 
-        return jwtService.generateToken(user);
+    public String createSurveyParticipant(String userName) {
+        User user = new User();
+        user.setEmail(userName);
+        String password = this.passwordGeneratorService.genPassword(8);
+        createAnnotator(password, user, "SURVEY_PARTICIPANT");
+        return password;
     }
 
     public String login(String email, String password) {

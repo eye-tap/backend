@@ -1,6 +1,8 @@
 package ch.ethz.eyetap.controller;
 
 import ch.ethz.eyetap.dto.AuthRequest;
+import ch.ethz.eyetap.dto.AuthResponse;
+import ch.ethz.eyetap.dto.SignupRequest;
 import ch.ethz.eyetap.service.AuthService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -15,13 +17,13 @@ public class AuthController {
 
     private final AuthService authService;
 
-    @PostMapping("/signup")
-    public String signup(@RequestBody AuthRequest req) {
-        return authService.signup(req.email(), req.password());
+    @PostMapping("/register")
+    public AuthResponse signup(@RequestBody SignupRequest req) {
+        return new AuthResponse(authService.signup(req.id(), req.password()));
     }
 
     @PostMapping("/login")
-    public String login(@RequestBody AuthRequest req) {
-        return authService.login(req.email(), req.password());
+    public AuthResponse login(@RequestBody AuthRequest req) {
+        return new AuthResponse(authService.login(req.id(), req.password()));
     }
 }

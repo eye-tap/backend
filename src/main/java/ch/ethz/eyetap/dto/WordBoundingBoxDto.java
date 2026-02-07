@@ -1,6 +1,6 @@
 package ch.ethz.eyetap.dto;
 
-import ch.ethz.eyetap.model.WordBoundingBox;
+import ch.ethz.eyetap.model.annotation.WordBoundingBox;
 import lombok.Value;
 
 import java.io.Serializable;

@@ -1,5 +1,6 @@
-package ch.ethz.eyetap.model;
+package ch.ethz.eyetap.model.annotation;
 
+import ch.ethz.eyetap.model.User;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
