@@ -1,0 +1,9 @@
+{
+  "version": "1",
+  "name": "eyetap",
+  "type": "collection",
+  "ignore": [
+    "node_modules",
+    ".git"
+  ]
+}

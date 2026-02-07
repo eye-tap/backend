@@ -1,0 +1,38 @@
+package ch.ethz.eyetap.model;
+
+import jakarta.persistence.*;
+import lombok.Getter;
+import lombok.Setter;
+
+import java.util.LinkedHashSet;
+import java.util.Set;
+
+@Getter
+@Setter
+@Entity
+@Table(name = "text")
+public class Text {
+    @Id
+    @GeneratedValue(strategy = GenerationType.AUTO)
+    @Column(name = "id", nullable = false)
+    private Long id;
+
+    @Column(name = "title")
+    private String title;
+
+    @OneToMany(mappedBy = "text", orphanRemoval = true)
+    private Set<ReadingSession> readingSessions = new LinkedHashSet<>();
+
+    @OneToMany(mappedBy = "text", orphanRemoval = true)
+    private Set<WordBoundingBox> wordBoundingBoxes = new LinkedHashSet<>();
+
+    @OneToMany(mappedBy = "text", orphanRemoval = true)
+    private Set<CharacterBoundingBox> characterBoundingBoxes = new LinkedHashSet<>();
+
+    @Lob
+    @Basic(fetch = FetchType.LAZY)
+    @Column(name = "background_image")
+    private byte[] backgroundImage;
+
+
+}
