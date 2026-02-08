@@ -34,5 +34,7 @@ public class Text {
     @Column(name = "background_image")
     private byte[] backgroundImage;
 
+    @Column(name = "foreign_id")
+    private Long foreignId;
 
 }

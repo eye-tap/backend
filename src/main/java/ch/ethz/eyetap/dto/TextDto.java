@@ -13,6 +13,7 @@ import java.util.Set;
 public class TextDto implements Serializable {
     Long id;
     String title;
+    Long foreignId;
     Set<WordBoundingBoxDto> wordBoundingBoxes;
     Set<CharacterBoundingBoxDto> characterBoundingBoxes;
     byte[] backgroundImage;

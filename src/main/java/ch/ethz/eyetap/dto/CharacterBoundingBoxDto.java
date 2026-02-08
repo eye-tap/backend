@@ -11,6 +11,7 @@ import java.io.Serializable;
 @Value
 public class CharacterBoundingBoxDto implements Serializable {
     Long id;
+    String character;
     Long xMin;
     Long xMax;
     Long yMin;

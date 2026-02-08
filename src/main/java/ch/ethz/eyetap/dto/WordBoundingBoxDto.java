@@ -11,6 +11,7 @@ import java.io.Serializable;
 @Value
 public class WordBoundingBoxDto implements Serializable {
     Long id;
+    String word;
     Long xMin;
     Long xMax;
     Long yMin;

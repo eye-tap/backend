@@ -24,6 +24,9 @@ public class WordBoundingBox {
     @JoinColumn(name = "text_id", nullable = false)
     private Text text;
 
+    @Column(name = "word", nullable = false)
+    private String word;
+
     @Override
     public final boolean equals(Object o) {
         if (this == o) return true;

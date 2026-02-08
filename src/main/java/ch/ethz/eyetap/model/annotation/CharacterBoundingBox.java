@@ -24,6 +24,9 @@ public class CharacterBoundingBox {
     @JoinColumn(name = "text_id", nullable = false)
     private Text text;
 
+    @Column(name = "character", nullable = false)
+    private String character;
+
     @Override
     public final boolean equals(Object o) {
         if (this == o) return true;
