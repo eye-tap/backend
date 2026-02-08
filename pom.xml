@@ -134,6 +134,7 @@
                 </configuration>
             </plugin>
         </plugins>
+        <finalName>eyetap-backend</finalName>
     </build>
 
 </project>
