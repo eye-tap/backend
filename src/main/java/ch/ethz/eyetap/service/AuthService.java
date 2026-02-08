@@ -60,7 +60,7 @@ public class AuthService {
         return new SurveyParticipant(user, password);
     }
 
-    record SurveyParticipant(User user, String password) {
+    public record SurveyParticipant(User user, String password) {
     }
 
     public String login(String email, String password) {
