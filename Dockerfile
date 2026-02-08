@@ -15,6 +15,10 @@ LABEL version="2.0.0"
 
 RUN apk add openjdk21-jre-headless
 
-COPY --from=build /build/target/eyetap-backend.jar /eyetap-backend.jar
+COPY --from=build /build/target/eyetap-backend.jar /app/eyetap-backend.jar
+WORKDIR /app
+RUN ls
 
-CMD ["java", "/eyetap-backend.jar"]
+# TODO: Env vars
+
+CMD ["java", "-jar", "eyetap-backend.jar"]
