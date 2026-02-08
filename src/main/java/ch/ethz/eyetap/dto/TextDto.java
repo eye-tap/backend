@@ -11,7 +11,7 @@ import java.util.Set;
  */
 @Value
 public class TextDto implements Serializable {
-    Long id;
+    Long id; // null if import
     String title;
     Long foreignId;
     Set<WordBoundingBoxDto> wordBoundingBoxes;

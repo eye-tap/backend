@@ -24,4 +24,7 @@ public class Fixation {
     @JoinColumn(name = "reading_session_id", nullable = false)
     private ReadingSession readingSession;
 
+    @Column(name = "foreign_id", nullable = false)
+    private Long foreignId;
+
 }

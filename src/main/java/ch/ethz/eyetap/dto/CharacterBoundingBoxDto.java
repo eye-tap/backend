@@ -10,7 +10,7 @@ import java.io.Serializable;
  */
 @Value
 public class CharacterBoundingBoxDto implements Serializable {
-    Long id;
+    Long id; // null if import
     String character;
     Long xMin;
     Long xMax;

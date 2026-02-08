@@ -20,4 +20,7 @@ public class Reader {
     @OneToMany(mappedBy = "reader", orphanRemoval = true)
     private Set<ReadingSession> readingSessions = new LinkedHashSet<>();
 
+    @Column(name = "foreign_id", nullable = false)
+    private Long foreignId;
+
 }

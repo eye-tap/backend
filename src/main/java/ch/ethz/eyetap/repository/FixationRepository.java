@@ -4,4 +4,8 @@ import ch.ethz.eyetap.model.annotation.Fixation;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface FixationRepository extends JpaRepository<Fixation, Long> {
+
+    boolean existsByForeignId(Long foreignId);
+
+    Fixation findByForeignId(Long foreignId);
 }

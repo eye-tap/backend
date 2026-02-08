@@ -32,4 +32,7 @@ public class ReadingSession {
     @JoinColumn(name = "text_id", nullable = false)
     private Text text;
 
+    @Column(name = "foreign_id", nullable = false)
+    private Long foreignId;
+
 }

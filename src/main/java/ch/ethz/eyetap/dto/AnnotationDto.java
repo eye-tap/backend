@@ -13,6 +13,6 @@ import java.io.Serializable;
 public class AnnotationDto implements Serializable {
     Long id;
     AnnotationType annotationType;
-    FixationDto fixation;
+    ImportFixationDto fixation;
     CharacterBoundingBoxDto characterBoundingBox;
 }

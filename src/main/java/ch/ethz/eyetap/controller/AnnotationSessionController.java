@@ -1,11 +1,9 @@
 package ch.ethz.eyetap.controller;
 
 import ch.ethz.eyetap.EntityMapper;
-import ch.ethz.eyetap.dto.AnnotationSessionDto;
 import ch.ethz.eyetap.dto.AnnotationsMetaDataDto;
 import ch.ethz.eyetap.dto.ShallowAnnotationSessionDto;
 import ch.ethz.eyetap.model.User;
-import ch.ethz.eyetap.model.annotation.AnnotationSession;
 import ch.ethz.eyetap.service.AnnotationSessionService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.GrantedAuthority;
