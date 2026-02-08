@@ -19,7 +19,7 @@ public class AuthController {
 
     @PostMapping("/register")
     public AuthResponse signup(@RequestBody SignupRequest req) {
-        return new AuthResponse(authService.signup(req.id(), req.password()));
+        return new AuthResponse(authService.signup(req.id(), req.email(), req.password()));
     }
 
     @PostMapping("/login")
