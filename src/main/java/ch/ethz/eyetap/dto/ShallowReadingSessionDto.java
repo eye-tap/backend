@@ -8,10 +8,10 @@ import java.io.Serializable;
 /**
  * DTO for {@link ReadingSession}
  */
-@Value
-public class ShallowReadingSessionDto implements Serializable {
-    Long id;
-    Long reader;
-    Long textId;
-    String textTitle;
+public record ShallowReadingSessionDto(
+        Long id,
+        Long reader,
+        Long textId,
+        String textTitle
+) {
 }

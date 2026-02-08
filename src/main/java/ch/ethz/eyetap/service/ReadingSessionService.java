@@ -51,19 +51,19 @@ public class ReadingSessionService {
         ReadingSession finalReadingSession = readingSession;
         importReadingSessionDto.fixations()
                 .stream()
-                .filter(fixationDto -> !this.fixationRepository.existsByForeignId(fixationDto.getForeignId()))
+                .filter(fixationDto -> !this.fixationRepository.existsByForeignId(fixationDto.foreignId()))
                 .forEach(fixationDto -> {
                     Fixation fixation = new Fixation();
-                    fixation.setForeignId(fixationDto.getForeignId());
-                    fixation.setX(fixationDto.getX());
-                    fixation.setY(fixationDto.getY());
+                    fixation.setForeignId(fixationDto.foreignId());
+                    fixation.setX(fixationDto.x());
+                    fixation.setY(fixationDto.y());
                     fixation.setReadingSession(finalReadingSession);
                     this.fixationRepository.save(fixation);
                 });
 
         Set<Fixation> fixations = importReadingSessionDto.fixations()
                 .stream()
-                .map(fixationDto -> this.fixationRepository.findByForeignId(fixationDto.getForeignId()))
+                .map(fixationDto -> this.fixationRepository.findByForeignId(fixationDto.foreignId()))
                 .collect(Collectors.toSet());
 
         finalReadingSession.setFixations(fixations);

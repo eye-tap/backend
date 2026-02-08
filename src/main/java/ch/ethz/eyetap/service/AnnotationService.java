@@ -12,6 +12,8 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class AnnotationService {
 
+    // todo: verify that annotation session is owned by user trying to annotate
+
     private final AnnotationSessionRepository annotationSessionRepository;
     private final AnnotationRepository annotationRepository;
 
@@ -30,7 +32,7 @@ public class AnnotationService {
         currentAnnotation.setFixation(fixation);
         currentAnnotation.setCharacterBoundingBox(characterBoundingBox);
         currentAnnotation.setAnnotationSession(annotationSession);
-        currentAnnotation.setAnnotationType(AnnotationType.USER);
+        currentAnnotation.setAnnotationType(AnnotationType.ANNOTATED);
 
         annotationRepository.save(currentAnnotation);
 

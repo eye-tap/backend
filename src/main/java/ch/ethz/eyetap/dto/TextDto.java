@@ -8,13 +8,9 @@ import java.util.Set;
 
 /**
  * DTO for {@link Text}
+ * @param id  null if import
  */
-@Value
-public class TextDto implements Serializable {
-    Long id; // null if import
-    String title;
-    Long foreignId;
-    Set<WordBoundingBoxDto> wordBoundingBoxes;
-    Set<CharacterBoundingBoxDto> characterBoundingBoxes;
-    byte[] backgroundImage;
+public record TextDto(Long id, String title, Long foreignId, Set<WordBoundingBoxDto> wordBoundingBoxes,
+                      Set<CharacterBoundingBoxDto> characterBoundingBoxes,
+                      byte[] backgroundImage) {
 }

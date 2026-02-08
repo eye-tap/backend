@@ -8,12 +8,11 @@ import java.io.Serializable;
 /**
  * DTO for {@link WordBoundingBox}
  */
-@Value
-public class WordBoundingBoxDto implements Serializable {
-    Long id;
-    String word;
-    Long xMin;
-    Long xMax;
-    Long yMin;
-    Long yMax;
+public record WordBoundingBoxDto(Long id,
+                                 String word,
+                                 Long xMin,
+                                 Long xMax,
+                                 Long yMin,
+                                 Long yMax
+) {
 }

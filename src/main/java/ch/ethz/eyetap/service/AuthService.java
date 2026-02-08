@@ -4,6 +4,8 @@ import ch.ethz.eyetap.model.annotation.Annotator;
 import ch.ethz.eyetap.model.User;
 import ch.ethz.eyetap.repository.AnnotatorRepository;
 import ch.ethz.eyetap.repository.UserRepository;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -50,12 +52,15 @@ public class AuthService {
         return user;
     }
 
-    public String createSurveyParticipant(String userName) {
+    public SurveyParticipant createSurveyParticipant(String userName) {
         User user = new User();
         user.setUsername(userName);
         String password = this.passwordGeneratorService.genPassword(8);
         createAnnotator(password, user, "SURVEY_PARTICIPANT");
-        return password;
+        return new SurveyParticipant(user, password);
+    }
+
+    record SurveyParticipant(User user, String password) {
     }
 
     public String login(String email, String password) {

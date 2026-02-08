@@ -1,5 +1,6 @@
 package ch.ethz.eyetap.model.annotation;
 
+import ch.ethz.eyetap.model.survey.Survey;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
@@ -32,5 +33,9 @@ public class AnnotationSession {
     @ManyToOne(optional = false)
     @JoinColumn(name = "reading_session_id", nullable = false)
     private ReadingSession readingSession;
+
+    @ManyToOne
+    @JoinColumn(name = "survey_id")
+    private Survey survey;
 
 }

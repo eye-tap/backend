@@ -8,12 +8,11 @@ import java.io.Serializable;
 /**
  * DTO for {@link CharacterBoundingBox}
  */
-@Value
-public class CharacterBoundingBoxDto implements Serializable {
-    Long id; // null if import
-    String character;
-    Long xMin;
-    Long xMax;
-    Long yMin;
-    Long yMax;
+public record CharacterBoundingBoxDto(Long id, // null if import
+                                      String character,
+                                      Long xMin,
+                                      Long xMax,
+                                      Long yMin,
+                                      Long yMax
+) {
 }

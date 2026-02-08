@@ -1,12 +1,15 @@
 package ch.ethz.eyetap;
 
-import ch.ethz.eyetap.dto.CharacterBoundingBoxDto;
-import ch.ethz.eyetap.dto.ShallowReadingSessionDto;
-import ch.ethz.eyetap.dto.TextDto;
-import ch.ethz.eyetap.dto.WordBoundingBoxDto;
+import ch.ethz.eyetap.dto.*;
+import ch.ethz.eyetap.model.User;
 import ch.ethz.eyetap.model.annotation.*;
+import ch.ethz.eyetap.model.survey.Survey;
+import jakarta.persistence.SecondaryTable;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
+
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @Mapper(componentModel = "spring")
 public interface EntityMapper {
@@ -17,10 +20,10 @@ public interface EntityMapper {
     TextDto toTextDto(Text text);
 
     @Mapping(target = "text", ignore = true)
-    @Mapping(target = "boundingBox.XMin", source = "XMin")
-    @Mapping(target = "boundingBox.XMax", source = "XMax")
-    @Mapping(target = "boundingBox.YMin", source = "YMin")
-    @Mapping(target = "boundingBox.YMax", source = "YMax")
+    @Mapping(target = "boundingBox.XMin", source = "xMin")
+    @Mapping(target = "boundingBox.XMax", source = "xMax")
+    @Mapping(target = "boundingBox.YMin", source = "yMin")
+    @Mapping(target = "boundingBox.YMax", source = "yMax")
     CharacterBoundingBox fromCharacterBoundingBoxDto(CharacterBoundingBoxDto characterBoundingBoxDto);
 
     @Mapping(target = "xMin", source = "boundingBox.XMin")
@@ -30,10 +33,10 @@ public interface EntityMapper {
     CharacterBoundingBoxDto toBoundingBoxDto(CharacterBoundingBox characterBoundingBox);
 
     @Mapping(target = "text", ignore = true)
-    @Mapping(target = "boundingBox.XMin", source = "XMin")
-    @Mapping(target = "boundingBox.XMax", source = "XMax")
-    @Mapping(target = "boundingBox.YMin", source = "YMin")
-    @Mapping(target = "boundingBox.YMax", source = "YMax")
+    @Mapping(target = "boundingBox.XMin", source = "xMin")
+    @Mapping(target = "boundingBox.XMax", source = "xMax")
+    @Mapping(target = "boundingBox.YMin", source = "yMin")
+    @Mapping(target = "boundingBox.YMax", source = "yMax")
     WordBoundingBox fromCharacterBoundingBoxDto(WordBoundingBoxDto characterBoundingBoxDto);
 
     @Mapping(target = "xMin", source = "boundingBox.XMin")
@@ -43,6 +46,8 @@ public interface EntityMapper {
     WordBoundingBoxDto toBoundingBoxDto(WordBoundingBox characterBoundingBox);
 
 
+    @Mapping(target = "textTitle", source = "text.title")
+    @Mapping(target = "textId", source = "text.id")
     ShallowReadingSessionDto toShallowReadingSessionDto(ReadingSession readingSession);
 
     default Long readerId(Reader reader) {
@@ -51,5 +56,16 @@ public interface EntityMapper {
 
     default Long textId(Text text) {
         return text.getId();
+    }
+
+    @Mapping(target = "userIds", expression = "java(userIds(survey))")
+    SurveyDto toSurveyDto(Survey survey);
+
+    default Set<Long> userIds(Survey survey) {
+        return survey.getUsers().stream().map(User::getId).collect(Collectors.toSet());
+    }
+
+    default Long toAnnotatorId(Annotator value){
+        return value.getId();
     }
 }
