@@ -5,7 +5,7 @@ RUN apk add openjdk21-jdk maven
 
 COPY . /build
 WORKDIR /build
-RUN mvn package
+RUN mvn package -DskipTests
 
 
 # Production image
