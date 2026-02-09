@@ -20,6 +20,7 @@ public class Text {
     @Column(name = "title", unique = true)
     private String title;
 
+    // TODO: Add wordCount, totalPoints, annotatedPoints?
     @OneToMany(mappedBy = "text", orphanRemoval = true)
     private Set<ReadingSession> readingSessions = new LinkedHashSet<>();
 
