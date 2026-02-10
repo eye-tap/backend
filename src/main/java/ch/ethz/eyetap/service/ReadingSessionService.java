@@ -2,6 +2,7 @@ package ch.ethz.eyetap.service;
 
 import ch.ethz.eyetap.dto.ImportFixationDto;
 import ch.ethz.eyetap.dto.ImportReadingSessionDto;
+import ch.ethz.eyetap.model.User;
 import ch.ethz.eyetap.model.annotation.Fixation;
 import ch.ethz.eyetap.model.annotation.Reader;
 import ch.ethz.eyetap.model.annotation.ReadingSession;
@@ -69,6 +70,9 @@ public class ReadingSessionService {
         return readingSession;
     }
 
+    public Set<ReadingSession> getAll() {
+        return new HashSet<>(this.readingSessionRepository.findAll());
+    }
 
 }
 
