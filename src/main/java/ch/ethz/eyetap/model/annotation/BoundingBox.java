@@ -2,12 +2,14 @@ package ch.ethz.eyetap.model.annotation;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Embeddable;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.*;
 
 @Getter
 @Setter
 @Embeddable
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class BoundingBox {
     @Column(name = "x_min", nullable = false)
     private Long xMin;

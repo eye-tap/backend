@@ -1,8 +1,7 @@
 package ch.ethz.eyetap.model.annotation;
 
 import jakarta.persistence.*;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.*;
 import org.hibernate.proxy.HibernateProxy;
 
 import java.util.Objects;
@@ -11,6 +10,9 @@ import java.util.Objects;
 @Setter
 @Entity
 @Table(name = "word_bounding_box")
+@Builder
+@AllArgsConstructor
+@NoArgsConstructor
 public class WordBoundingBox {
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
@@ -26,6 +28,9 @@ public class WordBoundingBox {
 
     @Column(name = "word", nullable = false)
     private String word;
+
+    @Column(name = "foreign_id")
+    private Long foreignId;
 
     @Override
     public final boolean equals(Object o) {

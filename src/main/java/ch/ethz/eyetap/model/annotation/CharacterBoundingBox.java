@@ -1,8 +1,7 @@
 package ch.ethz.eyetap.model.annotation;
 
 import jakarta.persistence.*;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.*;
 import org.hibernate.proxy.HibernateProxy;
 
 import java.util.Objects;
@@ -11,6 +10,10 @@ import java.util.Objects;
 @Setter
 @Entity
 @Table(name = "character_bounding_box")
+@Builder
+@NonNull
+@AllArgsConstructor
+@NoArgsConstructor
 public class CharacterBoundingBox {
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
@@ -26,6 +29,9 @@ public class CharacterBoundingBox {
 
     @Column(name = "character", nullable = false)
     private String character;
+
+    @Column(name = "foreign_id", nullable = false)
+    private Long foreignId;
 
     @Override
     public final boolean equals(Object o) {

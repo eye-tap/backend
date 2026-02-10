@@ -8,9 +8,8 @@ import java.util.Set;
 
 /**
  * DTO for {@link Text}
- * @param id  null if import
  */
-public record TextDto(Long id, String title, Long foreignId, Set<WordBoundingBoxDto> wordBoundingBoxes,
+public record TextDto(Long id, String title, Set<WordBoundingBoxDto> wordBoundingBoxes,
                       Set<CharacterBoundingBoxDto> characterBoundingBoxes,
                       byte[] backgroundImage) {
 }

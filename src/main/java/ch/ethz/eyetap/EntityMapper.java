@@ -14,30 +14,13 @@ import java.util.stream.Collectors;
 @Mapper(componentModel = "spring")
 public interface EntityMapper {
 
-    @Mapping(target = "readingSessions", expression = "java(Set.of())")
-    Text fromTextDto(TextDto textDto);
-
     TextDto toTextDto(Text text);
-
-    @Mapping(target = "text", ignore = true)
-    @Mapping(target = "boundingBox.XMin", source = "xMin")
-    @Mapping(target = "boundingBox.XMax", source = "xMax")
-    @Mapping(target = "boundingBox.YMin", source = "yMin")
-    @Mapping(target = "boundingBox.YMax", source = "yMax")
-    CharacterBoundingBox fromCharacterBoundingBoxDto(CharacterBoundingBoxDto characterBoundingBoxDto);
 
     @Mapping(target = "xMin", source = "boundingBox.XMin")
     @Mapping(target = "xMax", source = "boundingBox.XMax")
     @Mapping(target = "yMin", source = "boundingBox.YMin")
     @Mapping(target = "yMax", source = "boundingBox.YMax")
     CharacterBoundingBoxDto toBoundingBoxDto(CharacterBoundingBox characterBoundingBox);
-
-    @Mapping(target = "text", ignore = true)
-    @Mapping(target = "boundingBox.XMin", source = "xMin")
-    @Mapping(target = "boundingBox.XMax", source = "xMax")
-    @Mapping(target = "boundingBox.YMin", source = "yMin")
-    @Mapping(target = "boundingBox.YMax", source = "yMax")
-    WordBoundingBox fromCharacterBoundingBoxDto(WordBoundingBoxDto characterBoundingBoxDto);
 
     @Mapping(target = "xMin", source = "boundingBox.XMin")
     @Mapping(target = "xMax", source = "boundingBox.XMax")

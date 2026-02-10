@@ -1,20 +1,22 @@
 package ch.ethz.eyetap.controller;
 
-import ch.ethz.eyetap.dto.ImportReadingSessionDto;
-import ch.ethz.eyetap.dto.ShallowReadingSessionDto;
-import ch.ethz.eyetap.dto.ShallowTextDto;
-import ch.ethz.eyetap.dto.TextDto;
+import ch.ethz.eyetap.dto.*;
 import ch.ethz.eyetap.model.annotation.ReadingSession;
 import ch.ethz.eyetap.model.annotation.Text;
 import ch.ethz.eyetap.service.ReadingSessionService;
 import ch.ethz.eyetap.service.TextService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.HashSet;
+import java.util.Set;
+
+@Slf4j
 @RestController
 @RequestMapping("/import")
 @RequiredArgsConstructor
@@ -25,7 +27,7 @@ public class ImportController {
 
     @PreAuthorize("hasRole('SURVEY_ADMIN')")
     @PostMapping("/text")
-    public ShallowTextDto text(@RequestBody TextDto textDto) {
+    public ShallowTextDto text(@RequestBody ImportTextDto textDto) {
         Text save = this.textService.save(textDto);
         return new ShallowTextDto(save.getId(), save.getTitle());
     }
@@ -38,5 +40,21 @@ public class ImportController {
                 saved.getReader().getId(),
                 saved.getText().getId(),
                 saved.getText().getTitle());
+    }
+
+    @PreAuthorize("hasRole('SURVEY_ADMIN')")
+    @PostMapping("/reading-sessions")
+    public Set<ShallowReadingSessionDto> readingSession(@RequestBody Set<ImportReadingSessionDto> importReadingSessionDto) {
+        Set<ShallowReadingSessionDto> readingSessionDtos = new HashSet<>();
+        for (ImportReadingSessionDto readingSessionDto : importReadingSessionDto) {
+            ReadingSession saved = this.readingSessionService.save(readingSessionDto);
+            ShallowReadingSessionDto shallowReadingSessionDto = new ShallowReadingSessionDto(saved.getId(),
+                    saved.getReader().getId(),
+                    saved.getText().getId(),
+                    saved.getText().getTitle());
+            readingSessionDtos.add(shallowReadingSessionDto);
+        }
+        log.info("Import of reading {} sessions complete", readingSessionDtos.size());
+        return readingSessionDtos;
     }
 }

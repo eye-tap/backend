@@ -1,5 +1,6 @@
 package ch.ethz.eyetap.service;
 
+import ch.ethz.eyetap.dto.ImportFixationDto;
 import ch.ethz.eyetap.dto.ImportReadingSessionDto;
 import ch.ethz.eyetap.model.annotation.Fixation;
 import ch.ethz.eyetap.model.annotation.Reader;
@@ -9,9 +10,12 @@ import ch.ethz.eyetap.repository.FixationRepository;
 import ch.ethz.eyetap.repository.ReaderRepository;
 import ch.ethz.eyetap.repository.ReadingSessionRepository;
 import ch.ethz.eyetap.repository.TextRepository;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -24,51 +28,47 @@ public class ReadingSessionService {
     private final TextRepository textRepository;
     private final FixationRepository fixationRepository;
 
+    @Transactional
     public ReadingSession save(ImportReadingSessionDto importReadingSessionDto) {
 
         ReadingSession readingSession = new ReadingSession();
 
-        Text text = this.textRepository.findByForeignId(importReadingSessionDto.textForeignId());
+        Text text = textRepository.findByForeignId(importReadingSessionDto.textForeignId());
         readingSession.setText(text);
 
-        readingSession = this.readingSessionRepository.save(readingSession);
-        Reader reader;
-
-        if (this.readerRepository.existsByForeignId(importReadingSessionDto.readerForeignId())) {
-            reader = this.readerRepository.findByForeignId(importReadingSessionDto.readerForeignId());
-        } else {
+        Reader reader = readerRepository.findByForeignId(importReadingSessionDto.readerForeignId());
+        if (reader == null) {
             reader = new Reader();
-            reader.setReadingSessions(Set.of(readingSession));
             reader.setForeignId(importReadingSessionDto.readerForeignId());
-            reader = this.readerRepository.save(reader);
+            reader = readerRepository.save(reader);
         }
-        readingSession.setReader(reader);
 
-        readingSession = this.readingSessionRepository.save(readingSession);
+        readingSession.setReader(reader);
+        readingSession = readingSessionRepository.save(readingSession);
+
+        // Batch insert fixations
+        Set<Long> existingIds = fixationRepository.findAllByIdIsIn(
+                importReadingSessionDto.fixations().stream().map(ImportFixationDto::foreignId).toList()
+        ).stream().map(Fixation::getForeignId).collect(Collectors.toSet());
 
         ReadingSession finalReadingSession = readingSession;
-        importReadingSessionDto.fixations()
-                .stream()
-                .filter(fixationDto -> !this.fixationRepository.existsByForeignId(fixationDto.foreignId()))
-                .forEach(fixationDto -> {
+        List<Fixation> newFixations = importReadingSessionDto.fixations().stream()
+                .filter(f -> !existingIds.contains(f.foreignId()))
+                .map(f -> {
                     Fixation fixation = new Fixation();
-                    fixation.setForeignId(fixationDto.foreignId());
-                    fixation.setX(fixationDto.x());
-                    fixation.setY(fixationDto.y());
+                    fixation.setForeignId(f.foreignId());
+                    fixation.setX(f.x());
+                    fixation.setY(f.y());
                     fixation.setReadingSession(finalReadingSession);
-                    this.fixationRepository.save(fixation);
-                });
+                    return fixation;
+                }).toList();
 
-        Set<Fixation> fixations = importReadingSessionDto.fixations()
-                .stream()
-                .map(fixationDto -> this.fixationRepository.findByForeignId(fixationDto.foreignId()))
-                .collect(Collectors.toSet());
+        fixationRepository.saveAll(newFixations);
 
-        finalReadingSession.setFixations(fixations);
-
-        return this.readingSessionRepository.save(finalReadingSession);
-
+        readingSession.getFixations().addAll(newFixations);
+        return readingSession;
     }
+
 
 }
 

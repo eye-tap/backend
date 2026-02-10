@@ -21,13 +21,13 @@ public class Text {
     private String title;
 
     // TODO: Add wordCount, totalPoints, annotatedPoints?
-    @OneToMany(mappedBy = "text", orphanRemoval = true)
+    @OneToMany(mappedBy = "text", cascade = CascadeType.ALL, orphanRemoval = true)
     private Set<ReadingSession> readingSessions = new LinkedHashSet<>();
 
-    @OneToMany(mappedBy = "text", orphanRemoval = true)
+    @OneToMany(mappedBy = "text", cascade = CascadeType.ALL, orphanRemoval = true)
     private Set<WordBoundingBox> wordBoundingBoxes = new LinkedHashSet<>();
 
-    @OneToMany(mappedBy = "text", orphanRemoval = true)
+    @OneToMany(mappedBy = "text", cascade = CascadeType.ALL, orphanRemoval = true)
     private Set<CharacterBoundingBox> characterBoundingBoxes = new LinkedHashSet<>();
 
     @Lob
