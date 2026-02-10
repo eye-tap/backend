@@ -28,8 +28,6 @@ public class ReadingSessionService {
 
         ReadingSession readingSession = new ReadingSession();
 
-        readingSession.setForeignId(importReadingSessionDto.foreignId());
-
         Text text = this.textRepository.findByForeignId(importReadingSessionDto.textForeignId());
         readingSession.setText(text);
 

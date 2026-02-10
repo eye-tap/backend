@@ -9,6 +9,6 @@ import java.io.Serializable;
 /**
  * DTO for {@link Annotation}
  */
-public record AnnotationDto(Long id, AnnotationType annotationType, ImportFixationDto fixation,
+public record AnnotationDto(Long id, AnnotationType annotationType, FixationDto fixation,
                             CharacterBoundingBoxDto characterBoundingBox) {
 }

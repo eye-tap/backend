@@ -8,6 +8,5 @@ import java.util.Set;
  */
 public record ImportReadingSessionDto(Set<ImportFixationDto> fixations,
                                       Long readerForeignId,
-                                      Long textForeignId,
-                                      Long foreignId) {
+                                      Long textForeignId) {
 }

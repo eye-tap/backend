@@ -65,7 +65,10 @@ public interface EntityMapper {
         return survey.getUsers().stream().map(User::getId).collect(Collectors.toSet());
     }
 
-    default Long toAnnotatorId(Annotator value){
+    default Long toAnnotatorId(Annotator value) {
         return value.getId();
     }
+
+    @Mapping(target = "annotationsMetaData", source = "annotationsMetaDataDto")
+    AnnotationSessionDto toAnnotationSessionDto(AnnotationSession annotationSession, AnnotationsMetaDataDto annotationsMetaDataDto);
 }
