@@ -7,6 +7,7 @@ import ch.ethz.eyetap.dto.ShallowAnnotationSessionDto;
 import ch.ethz.eyetap.model.User;
 import ch.ethz.eyetap.model.annotation.AnnotationSession;
 import ch.ethz.eyetap.service.AnnotationSessionService;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.GrantedAuthority;

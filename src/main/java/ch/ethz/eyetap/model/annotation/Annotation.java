@@ -27,8 +27,8 @@ public class Annotation {
     @JoinColumn(name = "annotation_session_id")
     private AnnotationSession annotationSession;
 
-    @ManyToOne(optional = false)
-    @JoinColumn(name = "character_bounding_box_id", nullable = false)
+    @ManyToOne
+    @JoinColumn(name = "character_bounding_box_id")
     private CharacterBoundingBox characterBoundingBox;
 
     @ManyToOne

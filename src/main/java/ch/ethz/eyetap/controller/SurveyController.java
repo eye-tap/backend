@@ -6,9 +6,13 @@ import ch.ethz.eyetap.dto.SurveyCreatedDto;
 import ch.ethz.eyetap.dto.SurveyDto;
 import ch.ethz.eyetap.model.User;
 import ch.ethz.eyetap.model.survey.Survey;
+import ch.ethz.eyetap.service.HibernateStatisticsPrinter;
 import ch.ethz.eyetap.service.SurveyService;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.hibernate.SessionFactory;
+import org.hibernate.stat.Statistics;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
@@ -24,12 +28,16 @@ public class SurveyController {
 
     private final SurveyService surveyService;
     private final EntityMapper entityMapper;
+    private final SessionFactory sessionFactory;
 
     @PreAuthorize("hasRole('SURVEY_ADMIN')")
     @PostMapping
     public SurveyCreatedDto create(@RequestBody CreateSurveyDto createSurveyDto,
                                    @AuthenticationPrincipal User user) {
-        return this.surveyService.create(user, createSurveyDto);
+        SurveyCreatedDto surveyCreatedDto = this.surveyService.create(user, createSurveyDto);
+        log.info("Created survey {}", surveyCreatedDto);
+        HibernateStatisticsPrinter.print(this.sessionFactory.getStatistics());
+        return surveyCreatedDto;
     }
 
     @PreAuthorize("hasRole('SURVEY_ADMIN')")
@@ -40,11 +48,15 @@ public class SurveyController {
 
     @PreAuthorize("hasRole('SURVEY_ADMIN')")
     @GetMapping
+    @Transactional
     public Set<SurveyDto> getAll() {
-        return this.surveyService.getAll()
+        Set<SurveyDto> collect = this.surveyService.getAll()
                 .stream()
-                .map(this.entityMapper::toSurveyDto)
+                .map(survey -> this.surveyService.mapToSurveyDto(survey.getId()))
                 .collect(Collectors.toSet());
+
+        HibernateStatisticsPrinter.print(this.sessionFactory.getStatistics());
+        return collect;
     }
 
     @PreAuthorize("hasRole('SURVEY_ADMIN')")

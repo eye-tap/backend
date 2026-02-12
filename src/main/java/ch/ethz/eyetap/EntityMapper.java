@@ -5,6 +5,7 @@ import ch.ethz.eyetap.model.User;
 import ch.ethz.eyetap.model.annotation.*;
 import ch.ethz.eyetap.model.survey.Survey;
 import jakarta.persistence.SecondaryTable;
+import jakarta.transaction.Transactional;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 
@@ -54,4 +55,5 @@ public interface EntityMapper {
 
     @Mapping(target = "annotationsMetaData", source = "annotationsMetaDataDto")
     AnnotationSessionDto toAnnotationSessionDto(AnnotationSession annotationSession, AnnotationsMetaDataDto annotationsMetaDataDto);
+
 }

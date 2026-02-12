@@ -10,9 +10,9 @@ import java.io.Serializable;
  */
 public record ImportCharacterBoundingBoxDto(Long foreignId,
                                             String character,
-                                            Long xMin,
-                                            Long xMax,
-                                            Long yMin,
-                                            Long yMax
+                                            Double xMin,
+                                            Double xMax,
+                                            Double yMin,
+                                            Double yMax
 ) {
 }

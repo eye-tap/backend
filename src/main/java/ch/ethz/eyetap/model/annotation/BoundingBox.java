@@ -12,19 +12,19 @@ import lombok.*;
 @AllArgsConstructor
 public class BoundingBox {
     @Column(name = "x_min", nullable = false)
-    private Long xMin;
+    private Double xMin;
 
     @Column(name = "x_max", nullable = false)
-    private Long xMax;
+    private Double xMax;
 
     @Column(name = "y_min", nullable = false)
-    private Long yMin;
+    private Double yMin;
 
     @Column(name = "y_max", nullable = false)
-    private Long yMax;
+    private Double yMax;
 
 
-    public boolean contains(Long px, Long py) {
+    public boolean contains(Double px, Double py) {
         return px >= xMin && px <= xMax &&
                 py >= yMin && py <= yMax;
     }

@@ -7,12 +7,16 @@ import ch.ethz.eyetap.model.annotation.*;
 import ch.ethz.eyetap.model.survey.Survey;
 import ch.ethz.eyetap.repository.AnnotationRepository;
 import ch.ethz.eyetap.repository.AnnotationSessionRepository;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.util.HashSet;
 import java.util.Set;
 
+@Slf4j
+@Transactional
 @Service
 @RequiredArgsConstructor
 public class AnnotationSessionService {
@@ -21,20 +25,16 @@ public class AnnotationSessionService {
     private final AnnotationSessionRepository annotationSessionRepository;
 
     public Set<AnnotationSession> getAnnotationSessionsByUser(User user) {
-        return user.getAnnotator().getAnnotationSessions();
+        return this.annotationSessionRepository.findAllByAnnotator(user.getAnnotator());
     }
 
     public AnnotationsMetaDataDto calculateAnnotationsMetaData(AnnotationSession session) {
-        int total = session.getAnnotations().size();
-        int set = (int) session.getAnnotations().stream().filter(annotation ->
-                        annotation.getAnnotationType().equals(AnnotationType.ANNOTATED)
-                                || annotation.getAnnotationType().equals(AnnotationType.MACHINE_ANNOTATED))
-                .count();
-
-        return new AnnotationsMetaDataDto(total, set);
+        return new AnnotationsMetaDataDto(0, 0);
+        // todo: collect actual data here
     }
 
     public AnnotationSession create(Survey survey, User user, ReadingSession readingSession) {
+        log.info("Creating annotation sessions for reading session {}", readingSession.getId());
         AnnotationSession annotationSession = new AnnotationSession();
         annotationSession.setAnnotator(user.getAnnotator());
         annotationSession.setReadingSession(readingSession);
@@ -46,7 +46,7 @@ public class AnnotationSessionService {
 
         Set<Fixation> unannotatedFixations = new HashSet<>();
         for (Fixation fixation : readingSession.getFixations()) {
-            boolean success = createAnnotationIfAlignsWithCharacterBoundingBox(readingSession, fixation, annotationSession, annotations);
+            boolean success = createUnsavedAnnotationIfAlignsWithCharacterBoundingBox(readingSession, fixation, annotationSession, annotations);
             if (!success) {
                 unannotatedFixations.add(fixation);
             }
@@ -57,16 +57,17 @@ public class AnnotationSessionService {
             annotation.setFixation(unannotatedFixation);
             annotation.setAnnotationType(AnnotationType.UNANNOTATED);
             annotation.setAnnotationSession(annotationSession);
-            annotation = this.annotationRepository.save(annotation);
             annotations.add(annotation);
         }
+
+        this.annotationRepository.saveAll(annotations);
 
         annotationSession.setAnnotations(annotations);
 
         return this.annotationSessionRepository.save(annotationSession);
     }
 
-    private boolean createAnnotationIfAlignsWithCharacterBoundingBox(ReadingSession readingSession, Fixation fixation, AnnotationSession annotationSession, Set<Annotation> annotations) {
+    private boolean createUnsavedAnnotationIfAlignsWithCharacterBoundingBox(ReadingSession readingSession, Fixation fixation, AnnotationSession annotationSession, Set<Annotation> annotations) {
         for (CharacterBoundingBox characterBoundingBox : readingSession.getText().getCharacterBoundingBoxes()) {
             if (!characterBoundingBox.getBoundingBox().contains(fixation.getX(), fixation.getY())) continue;
             Annotation annotation = new Annotation();
@@ -74,7 +75,6 @@ public class AnnotationSessionService {
             annotation.setAnnotationType(AnnotationType.MACHINE_ANNOTATED);
             annotation.setCharacterBoundingBox(characterBoundingBox);
             annotation.setAnnotationSession(annotationSession);
-            annotation = this.annotationRepository.save(annotation);
             annotations.add(annotation);
             return true;
         }

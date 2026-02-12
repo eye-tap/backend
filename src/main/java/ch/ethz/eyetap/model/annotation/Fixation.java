@@ -15,10 +15,10 @@ public class Fixation {
     private Long id;
 
     @Column(name = "x", nullable = false)
-    private Long x;
+    private Double x;
 
     @Column(name = "y", nullable = false)
-    private Long y;
+    private Double y;
 
     @ManyToOne(optional = false)
     @JoinColumn(name = "reading_session_id", nullable = false)

@@ -10,9 +10,9 @@ import java.io.Serializable;
  */
 public record WordBoundingBoxDto(Long id,
                                  String word,
-                                 Long xMin,
-                                 Long xMax,
-                                 Long yMin,
-                                 Long yMax
+                                 Double xMin,
+                                 Double xMax,
+                                 Double yMin,
+                                 Double yMax
 ) {
 }

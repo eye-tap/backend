@@ -4,6 +4,7 @@ import ch.ethz.eyetap.model.survey.Survey;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
+import org.hibernate.annotations.Formula;
 
 import java.util.LinkedHashSet;
 import java.util.Set;
@@ -37,5 +38,4 @@ public class AnnotationSession {
     @ManyToOne
     @JoinColumn(name = "survey_id")
     private Survey survey;
-
 }
