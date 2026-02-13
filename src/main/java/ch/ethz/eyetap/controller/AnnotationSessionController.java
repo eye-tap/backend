@@ -2,12 +2,9 @@ package ch.ethz.eyetap.controller;
 
 import ch.ethz.eyetap.EntityMapper;
 import ch.ethz.eyetap.dto.AnnotationSessionDto;
-import ch.ethz.eyetap.dto.AnnotationsMetaDataDto;
 import ch.ethz.eyetap.dto.ShallowAnnotationSessionDto;
 import ch.ethz.eyetap.model.User;
-import ch.ethz.eyetap.model.annotation.AnnotationSession;
 import ch.ethz.eyetap.service.AnnotationSessionService;
-import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.GrantedAuthority;
@@ -42,16 +39,9 @@ public class AnnotationSessionController {
         System.out.println("Current user: " + user.getUsername());
         System.out.println("Roles: " + roles);
 
-        return this.annotationSessionService.getAnnotationSessionsByUser(user).stream()
-                .map(session -> {
-                    AnnotationsMetaDataDto meta = this.annotationSessionService.calculateAnnotationsMetaData(session);
-                    return new ShallowAnnotationSessionDto(
-                            session.getId(),
-                            session.getAnnotator().getId(),
-                            meta,
-                            this.entityMapper.toShallowReadingSessionDto(session.getReadingSession())
-                    );
-                }).collect(Collectors.toSet());
+        return this.annotationSessionService.annotationSessionIdsByUserId(user.getAnnotator()).stream()
+                .map(this.annotationSessionService::calculateShallowAnnotationSessionDto)
+                .collect(Collectors.toSet());
 
     }
 
@@ -59,12 +49,11 @@ public class AnnotationSessionController {
     public AnnotationSessionDto getFullAnnotationSessionDto(
             @RequestParam Long id,
             @AuthenticationPrincipal User user) {
-        AnnotationSession session = this.annotationSessionService.getAnnotationSessionsByUser(user)
-                .stream().filter(s -> s.getId().equals(id))
-                .findFirst()
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "No annotation session with id " + id + " found."));
-        return this.entityMapper.toAnnotationSessionDto(session,
-                this.annotationSessionService.calculateAnnotationsMetaData(session));
+        if (this.annotationSessionService.annotationSessionIdsByUserId(user.getAnnotator())
+                .stream().noneMatch(id::equals)) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "No annotation session with id " + id + " found.");
+        }
+        return this.annotationSessionService.calculateAnnotationSessionDtoById(id);
     }
 
 }

@@ -13,4 +13,15 @@ public interface ReadingSessionRepository extends JpaRepository<ReadingSession, 
             """)
     ReadingSession findWithFixations(@Param("id") Long id);
 
+    // Returns the reader ID for a given reading session
+    @Query("SELECT rs.reader.id FROM ReadingSession rs WHERE rs.id = :id")
+    Long findReaderIdByReadingSession(@Param("id") Long id);
+
+    // Returns the text ID for a given reading session
+    @Query("SELECT rs.text.id FROM ReadingSession rs WHERE rs.id = :id")
+    Long findTextIdByReadingSession(@Param("id") Long id);
+
+    // Returns the text title for a given reading session
+    @Query("SELECT rs.text.title FROM ReadingSession rs WHERE rs.id = :id")
+    String findTextTitleByReadingSession(@Param("id") Long id);
 }

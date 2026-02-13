@@ -4,6 +4,7 @@ import ch.ethz.eyetap.configuration.JwtSecret;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 
@@ -26,6 +27,10 @@ public class JwtService {
         claims.put("email", user.getUsername());
         claims.put("username", user.getUsername());
         claims.put("exp", System.currentTimeMillis() + EXPIRATION_MS);
+
+        claims.put("roles", user.getAuthorities().stream()
+                .map(GrantedAuthority::getAuthority)
+                .toList());
 
         return Jwts.builder()
                 .claims(claims)

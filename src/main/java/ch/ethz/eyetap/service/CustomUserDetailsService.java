@@ -15,11 +15,11 @@ public class CustomUserDetailsService implements UserDetailsService {
     private final UserRepository userRepository;
 
     @Override
-    public UserDetails loadUserByUsername(@NonNull String email)
+    public UserDetails loadUserByUsername(@NonNull String username)
             throws UsernameNotFoundException {
 
-        return userRepository.findByEmail(email)
+        return userRepository.findByUsername(username)
                 .orElseThrow(() ->
-                        new UsernameNotFoundException(email));
+                        new UsernameNotFoundException(username));
     }
 }

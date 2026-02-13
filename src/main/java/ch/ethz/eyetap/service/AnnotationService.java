@@ -1,6 +1,11 @@
 package ch.ethz.eyetap.service;
 
-import ch.ethz.eyetap.model.annotation.*;
+import ch.ethz.eyetap.EntityMapper;
+import ch.ethz.eyetap.dto.AnnotationSessionDto;
+import ch.ethz.eyetap.model.annotation.Annotation;
+import ch.ethz.eyetap.model.annotation.AnnotationSession;
+import ch.ethz.eyetap.model.annotation.AnnotationType;
+import ch.ethz.eyetap.model.annotation.CharacterBoundingBox;
 import ch.ethz.eyetap.repository.AnnotationRepository;
 import ch.ethz.eyetap.repository.AnnotationSessionRepository;
 import ch.ethz.eyetap.repository.CharacterBoundingBoxRepository;
@@ -10,7 +15,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.util.Map;
-import java.util.Set;
 import java.util.stream.Collectors;
 
 @Service
@@ -21,34 +25,36 @@ public class AnnotationService {
     private final AnnotationSessionRepository annotationSessionRepository;
     private final AnnotationRepository annotationRepository;
     private final CharacterBoundingBoxRepository characterBoundingBoxRepository;
+    private final EntityMapper entityMapper;
+    private final AnnotationSessionService annotationSessionService;
 
     public AnnotationSession annotateMany(AnnotationSession annotationSession, Map<Annotation, CharacterBoundingBox> annotations) {
-        AnnotationSession session = annotationSession;
-        for (Map.Entry<Annotation, CharacterBoundingBox> fixationCharacterBoundingBoxEntry : annotations.entrySet()) {
-            session = annotate(session, fixationCharacterBoundingBoxEntry.getKey(), fixationCharacterBoundingBoxEntry.getValue());
-        }
-        return session;
-    }
+        // Update each annotation in memory
+        annotations.forEach((annotation, bbox) -> {
+            annotation.setCharacterBoundingBox(bbox);
+            annotation.setAnnotationSession(annotationSession);
+            annotation.setAnnotationType(AnnotationType.ANNOTATED);
+        });
 
-    public AnnotationSession annotate(AnnotationSession annotationSession, Annotation annotation, CharacterBoundingBox characterBoundingBox) {
+        // Bulk save all annotations at once
+        annotationRepository.saveAll(annotations.keySet());
 
-        annotation.setCharacterBoundingBox(characterBoundingBox);
-        annotation.setAnnotationSession(annotationSession);
-        annotation.setAnnotationType(AnnotationType.ANNOTATED);
-
-        annotationRepository.save(annotation);
-
+        // Update the annotation session
+        annotationSession.getAnnotations().addAll(annotations.keySet());
         return annotationSessionRepository.save(annotationSession);
     }
 
 
-    public AnnotationSession annotate(AnnotationSession session, Map<Long, Long> annotations) {
+    public AnnotationSessionDto annotate(Long sessionId, Map<Long, Long> annotations) {
+
+        AnnotationSession session = this.annotationSessionRepository.getReferenceById(sessionId);
+
         Map<Annotation, CharacterBoundingBox> map = annotations.entrySet()
                 .stream()
                 .collect(Collectors.toMap(
                         entry -> {
                             Long annotationId = entry.getKey();
-                            return this.findAnnotationByIdInSession(session, annotationId);
+                            return this.findAnnotationByIdInSession(sessionId, annotationId);
                         },
                         entry -> {
                             Long characterBoundingBoxId = entry.getValue();
@@ -60,12 +66,13 @@ public class AnnotationService {
                         }
                 ));
 
-        return this.annotateMany(session, map);
+        AnnotationSession annotationSession = this.annotateMany(session, map);
 
+        return this.annotationSessionService.calculateAnnotationSessionDto(annotationSession);
     }
 
-    private Annotation findAnnotationByIdInSession(AnnotationSession annotationSession, Long annotationId) {
-        return annotationSession.getAnnotations().stream().filter(annotation -> annotation.getId().equals(annotationId)).findFirst()
+    private Annotation findAnnotationByIdInSession(Long sessionId, Long annotationId) {
+        return this.annotationRepository.findByIdAndSessionId(sessionId, annotationId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Annotation id " + annotationId + " not found"));
     }
 }

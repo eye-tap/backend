@@ -50,11 +50,7 @@ public class SurveyController {
     @GetMapping
     @Transactional
     public Set<SurveyDto> getAll() {
-        Set<SurveyDto> collect = this.surveyService.getAll()
-                .stream()
-                .map(survey -> this.surveyService.mapToSurveyDto(survey.getId()))
-                .collect(Collectors.toSet());
-
+        Set<SurveyDto> collect = this.surveyService.getAll();
         HibernateStatisticsPrinter.print(this.sessionFactory.getStatistics());
         return collect;
     }

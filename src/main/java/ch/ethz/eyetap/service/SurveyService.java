@@ -1,17 +1,17 @@
 package ch.ethz.eyetap.service;
 
-import ch.ethz.eyetap.EntityMapper;
 import ch.ethz.eyetap.dto.*;
 import ch.ethz.eyetap.model.User;
 import ch.ethz.eyetap.model.annotation.AnnotationSession;
 import ch.ethz.eyetap.model.annotation.ReadingSession;
 import ch.ethz.eyetap.model.survey.Survey;
-import ch.ethz.eyetap.model.survey.SurveyProjection;
 import ch.ethz.eyetap.repository.*;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
@@ -30,10 +30,9 @@ public class SurveyService {
     private final UserRepository userRepository;
     private final AnnotationSessionService annotationSessionService;
     private final ReadingSessionRepository readingSessionRepository;
-    private final EntityMapper entityMapper;
-    private final AnnotationSessionRepository annotationSessionRepository;
 
     @Transactional
+    @CacheEvict(value = "surveys_all", allEntries = true)
     public SurveyCreatedDto create(User admin, CreateSurveyDto createSurveyDto) {
         log.info("Creating survey");
         long startTime = System.nanoTime();
@@ -169,11 +168,15 @@ public class SurveyService {
         return this.surveyRepository.findById(id).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "No servey was found with id: " + id));
     }
 
-    public Set<Survey> getAll() {
-        return new HashSet<>(this.surveyRepository.findAll());
+    @Cacheable("surveys_all")
+    public Set<SurveyDto> getAll() {
+        return this.surveyRepository.findAll()
+                .stream()
+                .map(survey -> this.mapToSurveyDto(survey.getId()))
+                .collect(Collectors.toSet());
     }
 
-
+    @CacheEvict(value = "surveys_all", allEntries = true)
     public void delete(Long id) {
         Survey survey = this.getById(id);
         for (AnnotationSession annotationSession : survey.getAnnotationSessions()) {
