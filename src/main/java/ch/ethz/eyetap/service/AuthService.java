@@ -1,5 +1,6 @@
 package ch.ethz.eyetap.service;
 
+import ch.ethz.eyetap.dto.AccountType;
 import ch.ethz.eyetap.model.User;
 import ch.ethz.eyetap.model.annotation.Annotator;
 import ch.ethz.eyetap.repository.AnnotatorRepository;
@@ -29,20 +30,26 @@ public class AuthService {
 
     private static final String ROLE_ADMIN = "SURVEY_ADMIN";
     private static final String ROLE_PARTICIPANT = "SURVEY_PARTICIPANT";
+    private static final String ROLE_CROWD_SOURCE = "SURVEY_CROWD_SOURCE";
 
     /**
      * Sign up a new admin user.
      */
     @Transactional
-    public String signup(String username, String email, String password) {
+    public String signup(String username, String email, String password, final AccountType accountType) {
         checkUsernameAndEmailAvailable(username, email);
 
         User user = new User();
         user.setUsername(username);
         user.setEmail(email);
 
-        user = createUserWithRole(user, password, ROLE_ADMIN);
-
+        String role = switch (accountType) {
+            case SURVEY_ADMIN -> ROLE_ADMIN;
+            case SURVEY_PARTICIPANT ->
+                    throw new ResponseStatusException(HttpStatus.FORBIDDEN, "You can not manually register as a survey participant");
+            case CROWD_SOURCE -> ROLE_CROWD_SOURCE;
+        };
+        user = createUserWithRole(user, password, role);
         return jwtService.generateToken(user);
     }
 
@@ -111,5 +118,6 @@ public class AuthService {
         return userRepository.save(savedUser);
     }
 
-    public record SurveyParticipant(User user, String password) {}
+    public record SurveyParticipant(User user, String password) {
+    }
 }
