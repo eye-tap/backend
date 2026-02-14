@@ -1,6 +1,5 @@
 package ch.ethz.eyetap.dto;
 
-import java.io.Serializable;
 import java.util.Set;
 
 /**
@@ -8,5 +7,6 @@ import java.util.Set;
  */
 public record ImportReadingSessionDto(Set<ImportFixationDto> fixations,
                                       Long readerForeignId,
-                                      Long textForeignId) {
+                                      Long textForeignId,
+                                      Set<ImportPreAnnotationDto> preAnnotations) {
 }

@@ -1,6 +1,5 @@
 package ch.ethz.eyetap.controller;
 
-import ch.ethz.eyetap.EntityMapper;
 import ch.ethz.eyetap.dto.AnnotationSessionDto;
 import ch.ethz.eyetap.dto.ShallowAnnotationSessionDto;
 import ch.ethz.eyetap.model.User;
@@ -9,10 +8,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.util.Set;
@@ -24,7 +20,6 @@ import java.util.stream.Collectors;
 public class AnnotationSessionController {
 
     private final AnnotationSessionService annotationSessionService;
-    private final EntityMapper entityMapper;
 
     @GetMapping
     public Set<ShallowAnnotationSessionDto> getSessions(
@@ -47,7 +42,7 @@ public class AnnotationSessionController {
 
     @GetMapping("/{id}")
     public AnnotationSessionDto getFullAnnotationSessionDto(
-            @RequestParam Long id,
+            @PathVariable Long id,
             @AuthenticationPrincipal User user) {
         if (this.annotationSessionService.annotationSessionIdsByUserId(user.getAnnotator())
                 .stream().noneMatch(id::equals)) {

@@ -1,6 +1,7 @@
 package ch.ethz.eyetap.service;
 
 import ch.ethz.eyetap.dto.ImportFixationDto;
+import ch.ethz.eyetap.dto.ImportPreAnnotationDto;
 import ch.ethz.eyetap.dto.ImportReadingSessionDto;
 import ch.ethz.eyetap.dto.ShallowReadingSessionDto;
 import ch.ethz.eyetap.model.annotation.Fixation;
@@ -65,6 +66,13 @@ public class ReadingSessionService {
                 }).toList();
 
         fixationRepository.saveAll(newFixations);
+
+        if (importReadingSessionDto.preAnnotations() != null) {
+            for (final ImportPreAnnotationDto preAnnotation : importReadingSessionDto.preAnnotations()) {
+                String title = preAnnotation.title();
+                // TODO: 14.02.2026 do something here
+            }
+        }
 
         readingSession.getFixations().addAll(newFixations);
         return readingSession;

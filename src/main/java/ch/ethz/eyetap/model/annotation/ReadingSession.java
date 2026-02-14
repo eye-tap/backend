@@ -3,6 +3,7 @@ package ch.ethz.eyetap.model.annotation;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
+import org.apache.commons.lang3.builder.ToStringBuilder;
 
 import java.util.LinkedHashSet;
 import java.util.Set;
@@ -32,4 +33,13 @@ public class ReadingSession {
     @JoinColumn(name = "text_id", nullable = false)
     private Text text;
 
+    @Override
+    public String toString() {
+        return new ToStringBuilder(this)
+                .append("id", id)
+                .append("fixations", fixations)
+                .append("reader", reader)
+                .append("text", text)
+                .toString();
+    }
 }

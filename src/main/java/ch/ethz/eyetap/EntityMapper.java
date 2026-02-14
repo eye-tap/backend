@@ -15,8 +15,6 @@ import java.util.stream.Collectors;
 @Mapper(componentModel = "spring")
 public interface EntityMapper {
 
-    TextDto toTextDto(Text text);
-
     @Mapping(target = "xMin", source = "boundingBox.XMin")
     @Mapping(target = "xMax", source = "boundingBox.XMax")
     @Mapping(target = "yMin", source = "boundingBox.YMin")
@@ -56,4 +54,8 @@ public interface EntityMapper {
     @Mapping(target = "annotationsMetaData", source = "annotationsMetaDataDto")
     AnnotationSessionDto toAnnotationSessionDto(AnnotationSession annotationSession, AnnotationsMetaDataDto annotationsMetaDataDto);
 
+    @Mapping(target = "textDto", expression = "java(toTextDto(readingSession.getText()))")
+    ReadingSessionDto toReadingSessionDto(ReadingSession readingSession);
+
+    TextDto toTextDto(Text text);
 }

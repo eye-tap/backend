@@ -3,6 +3,7 @@ package ch.ethz.eyetap.model.annotation;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
+import org.apache.commons.lang3.builder.ToStringBuilder;
 
 import java.util.LinkedHashSet;
 import java.util.Set;
@@ -38,4 +39,15 @@ public class Text {
     @Column(name = "foreign_id")
     private Long foreignId;
 
+    @Override
+    public String toString() {
+        return new ToStringBuilder(this)
+                .append("id", id)
+                .append("title", title)
+                .append("wordBoundingBoxes", wordBoundingBoxes)
+                .append("characterBoundingBoxes", characterBoundingBoxes)
+                .append("backgroundImage", backgroundImage)
+                .append("foreignId", foreignId)
+                .toString();
+    }
 }

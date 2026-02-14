@@ -35,7 +35,7 @@ public class AnnotationSessionService {
 
     public AnnotationsMetaDataDto calculateAnnotationsMetaData(Long annotationSessionId) {
         int total = Math.toIntExact(this.sessionRepository.countTotalFixationsByAnnotationSessionId(annotationSessionId));
-        int set = Math.toIntExact(this.sessionRepository.countTotalFixationsByAnnotationSessionId(annotationSessionId));
+        int set = Math.toIntExact(this.sessionRepository.countSetAnnotationsByAnnotationSessionId(annotationSessionId));
 
         return new AnnotationsMetaDataDto(total, set);
     }
@@ -66,6 +66,7 @@ public class AnnotationSessionService {
 
     public AnnotationSessionDto calculateAnnotationSessionDtoById(final Long id) {
         AnnotationSession referenceById = this.annotationSessionRepository.getReferenceById(id);
+        log.info("Calculating annotation session DTO for reading session {}", referenceById);
         return this.calculateAnnotationSessionDto(referenceById);
     }
 

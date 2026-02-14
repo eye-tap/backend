@@ -11,5 +11,5 @@ import java.util.Set;
  */
 public record AnnotationSessionDto(Long id, Long annotator, Set<AnnotationDto> annotations,
                                    AnnotationsMetaDataDto annotationsMetaData,
-                                   ShallowReadingSessionDto readingSession) {
+                                   ReadingSessionDto readingSession) {
 }

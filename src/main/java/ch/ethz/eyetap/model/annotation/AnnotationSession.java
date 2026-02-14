@@ -4,6 +4,7 @@ import ch.ethz.eyetap.model.survey.Survey;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
+import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.hibernate.annotations.Formula;
 
 import java.util.LinkedHashSet;
@@ -38,4 +39,15 @@ public class AnnotationSession {
     @ManyToOne
     @JoinColumn(name = "survey_id")
     private Survey survey;
+
+    @Override
+    public String toString() {
+        return new ToStringBuilder(this)
+                .append("id", id)
+                .append("annotator", annotator)
+                .append("annotations", annotations)
+                .append("readingSession", readingSession)
+                .append("survey", survey)
+                .toString();
+    }
 }
