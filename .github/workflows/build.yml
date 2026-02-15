@@ -1,6 +1,7 @@
 name: Create and publish container
 on:
-  push
+  release:
+    types: [published]
 jobs:
   build_container:
     runs-on: ubuntu-latest
