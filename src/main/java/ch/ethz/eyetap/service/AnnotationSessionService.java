@@ -16,6 +16,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
 import java.util.Set;
 
 @Slf4j
@@ -45,7 +46,8 @@ public class AnnotationSessionService {
                 this.annotationSessionRepository.annotatorByAnnotationSessionId(annotationSessionId),
                 this.calculateAnnotationsMetaData(annotationSessionId),
                 this.readingSessionService.shallowReadingSessionDto(
-                        this.sessionRepository.readingSessionByAnnotationSessionId(annotationSessionId))
+                        this.sessionRepository.readingSessionByAnnotationSessionId(annotationSessionId)),
+                this.annotationSessionRepository.lastEditedByAnnotationSessionId(annotationSessionId)
         );
     }
 
@@ -56,6 +58,7 @@ public class AnnotationSessionService {
         annotationSession.setAnnotator(user.getAnnotator());
         annotationSession.setReadingSession(readingSession);
         annotationSession.setSurvey(survey);
+        annotationSession.setLastEdited(LocalDateTime.now());
 
         return this.annotationSessionRepository.save(annotationSession);
     }

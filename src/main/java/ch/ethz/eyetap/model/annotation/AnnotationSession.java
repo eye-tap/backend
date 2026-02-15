@@ -7,6 +7,7 @@ import lombok.Setter;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.hibernate.annotations.Formula;
 
+import java.time.LocalDateTime;
 import java.util.LinkedHashSet;
 import java.util.Set;
 
@@ -39,6 +40,9 @@ public class AnnotationSession {
     @ManyToOne
     @JoinColumn(name = "survey_id")
     private Survey survey;
+
+    @Column(name = "last_edited", nullable = false)
+    private LocalDateTime lastEdited;
 
     @Override
     public String toString() {

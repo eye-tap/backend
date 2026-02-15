@@ -16,6 +16,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.sql.Timestamp;
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -118,6 +120,9 @@ public class SurveyService {
         Number totalAnnotations = (Number) row[10];
         Number totalAnnotated = (Number) row[11];
 
+        Object[] lastEditedArr = row[12] != null ? (Object[]) row[12] : null;
+        Object[] uploadedAtArr = row[13] != null ? (Object[]) row[12] : null;
+
         // Build ShallowAnnotationSessionDto
         Set<ShallowAnnotationSessionDto> sessions = new LinkedHashSet<>();
         if (annotationSessionIds != null && !annotationSessionIds.isEmpty()) {
@@ -125,6 +130,18 @@ public class SurveyService {
             Long[] sessionIds = annotationSessionIds.toArray(new Long[0]);
 
             for (int i = 0; i < n; i++) {
+
+                LocalDateTime lastEdited =
+                        lastEditedArr != null && i < lastEditedArr.length
+                                ? (LocalDateTime) lastEditedArr[i]
+                                : null;
+
+                LocalDateTime uploadedAt =
+                        lastEditedArr != null && i < lastEditedArr.length
+                                ? (LocalDateTime) uploadedAtArr[i]
+                                : null;
+
+
                 ShallowAnnotationSessionDto session = new ShallowAnnotationSessionDto(
                         sessionIds[i],
                         annotatorIdsArr != null && i < annotatorIdsArr.length ? ((Number) annotatorIdsArr[i]).longValue() : null,
@@ -136,8 +153,10 @@ public class SurveyService {
                                 readingSessionIdsArr != null && i < readingSessionIdsArr.length ? ((Number) readingSessionIdsArr[i]).longValue() : null,
                                 readingSessionReaderIdsArr != null && i < readingSessionReaderIdsArr.length ? ((Number) readingSessionReaderIdsArr[i]).longValue() : null,
                                 readingSessionTextIdsArr != null && i < readingSessionTextIdsArr.length ? ((Number) readingSessionTextIdsArr[i]).longValue() : null,
-                                readingSessionTextTitlesArr != null && i < readingSessionTextTitlesArr.length ? (String) readingSessionTextTitlesArr[i] : null
-                        )
+                                readingSessionTextTitlesArr != null && i < readingSessionTextTitlesArr.length ? (String) readingSessionTextTitlesArr[i] : null,
+                                uploadedAt
+                        ),
+                        lastEdited
                 );
                 sessions.add(session);
             }

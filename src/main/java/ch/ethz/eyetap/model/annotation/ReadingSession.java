@@ -5,6 +5,7 @@ import lombok.Getter;
 import lombok.Setter;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 
+import java.time.LocalDateTime;
 import java.util.LinkedHashSet;
 import java.util.Set;
 /*
@@ -32,6 +33,9 @@ public class ReadingSession {
     @ManyToOne(optional = false)
     @JoinColumn(name = "text_id", nullable = false)
     private Text text;
+
+    @Column(name = "uploaded_at")
+    private LocalDateTime uploadedAt;
 
     @Override
     public String toString() {

@@ -14,6 +14,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.time.LocalDateTime;
 import java.util.Map;
 import java.util.stream.Collectors;
 
@@ -25,7 +26,6 @@ public class AnnotationService {
     private final AnnotationSessionRepository annotationSessionRepository;
     private final AnnotationRepository annotationRepository;
     private final CharacterBoundingBoxRepository characterBoundingBoxRepository;
-    private final EntityMapper entityMapper;
     private final AnnotationSessionService annotationSessionService;
 
     public AnnotationSession annotateMany(AnnotationSession annotationSession, Map<Annotation, CharacterBoundingBox> annotations) {
@@ -41,6 +41,7 @@ public class AnnotationService {
 
         // Update the annotation session
         annotationSession.getAnnotations().addAll(annotations.keySet());
+        annotationSession.setLastEdited(LocalDateTime.now());
         return annotationSessionRepository.save(annotationSession);
     }
 

@@ -1,7 +1,6 @@
 package ch.ethz.eyetap.repository;
 
 import ch.ethz.eyetap.model.survey.Survey;
-import ch.ethz.eyetap.model.survey.SurveyProjection;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -21,7 +20,9 @@ public interface SurveyRepository extends JpaRepository<Survey, Long> {
                 ARRAY_AGG(DISTINCT t.id) AS reading_session_text_ids,
                 ARRAY_AGG(DISTINCT t.title) AS reading_session_text_titles,
                 COUNT(a_annotations.id) AS annotation_counts,
-                COUNT(CASE WHEN a_annotations.annotation_type IN ('ANNOTATED','MACHINE_ANNOTATED') THEN 1 END) AS annotated_counts
+                COUNT(CASE WHEN a_annotations.annotation_type IN ('ANNOTATED','MACHINE_ANNOTATED') THEN 1 END) AS annotated_counts,
+                ARRAY_AGG(DISTINCT a.last_edited) AS annotation_session_last_edited,
+                ARRAY_AGG(DISTINCT rs.uploaded_at) AS reading_session_uploaded_at
             FROM survey s
             JOIN survey_users su ON s.id = su.survey_id
             JOIN app_user su_user ON su.users_id = su_user.id

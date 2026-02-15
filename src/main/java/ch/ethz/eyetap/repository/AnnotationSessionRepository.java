@@ -6,6 +6,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.time.LocalDateTime;
 import java.util.Set;
 
 public interface AnnotationSessionRepository extends JpaRepository<AnnotationSession, Long> {
@@ -49,4 +50,14 @@ public interface AnnotationSessionRepository extends JpaRepository<AnnotationSes
                 WHERE a.id = :annotationSessionId
             """)
     long readingSessionByAnnotationSessionId(@Param("annotationSessionId") Long annotationSessionId);
+
+    @Query("""
+                SELECT a.lastEdited
+                FROM AnnotationSession a
+                WHERE a.id = :annotationSessionId
+            """)
+    LocalDateTime lastEditedByAnnotationSessionId(
+            @Param("annotationSessionId") Long annotationSessionId
+    );
+
 }

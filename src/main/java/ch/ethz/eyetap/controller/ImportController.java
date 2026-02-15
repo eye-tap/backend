@@ -39,7 +39,8 @@ public class ImportController {
         return new ShallowReadingSessionDto(saved.getId(),
                 saved.getReader().getId(),
                 saved.getText().getId(),
-                saved.getText().getTitle());
+                saved.getText().getTitle(),
+                saved.getUploadedAt());
     }
 
     @PreAuthorize("hasRole('SURVEY_ADMIN')")
@@ -51,7 +52,8 @@ public class ImportController {
             ShallowReadingSessionDto shallowReadingSessionDto = new ShallowReadingSessionDto(saved.getId(),
                     saved.getReader().getId(),
                     saved.getText().getId(),
-                    saved.getText().getTitle());
+                    saved.getText().getTitle(),
+                    saved.getUploadedAt());
             readingSessionDtos.add(shallowReadingSessionDto);
         }
         log.info("Import of reading {} sessions complete", readingSessionDtos.size());

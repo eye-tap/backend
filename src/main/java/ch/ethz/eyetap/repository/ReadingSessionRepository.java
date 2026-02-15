@@ -5,6 +5,8 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.time.LocalDateTime;
+
 public interface ReadingSessionRepository extends JpaRepository<ReadingSession, Long> {
     @Query("""
             SELECT rs FROM ReadingSession rs
@@ -24,4 +26,13 @@ public interface ReadingSessionRepository extends JpaRepository<ReadingSession, 
     // Returns the text title for a given reading session
     @Query("SELECT rs.text.title FROM ReadingSession rs WHERE rs.id = :id")
     String findTextTitleByReadingSession(@Param("id") Long id);
+
+    @Query("""
+                SELECT rs.uploadedAt
+                FROM ReadingSession rs
+                WHERE rs.id = :id
+            """)
+    LocalDateTime lastEditedByAnnotationSessionId(
+            @Param("id") Long id
+    );
 }

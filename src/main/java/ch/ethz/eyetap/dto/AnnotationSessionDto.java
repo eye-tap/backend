@@ -4,6 +4,7 @@ import ch.ethz.eyetap.model.annotation.AnnotationSession;
 import lombok.Value;
 
 import java.io.Serializable;
+import java.time.LocalDateTime;
 import java.util.Set;
 
 /**
@@ -11,5 +12,6 @@ import java.util.Set;
  */
 public record AnnotationSessionDto(Long id, Long annotator, Set<AnnotationDto> annotations,
                                    AnnotationsMetaDataDto annotationsMetaData,
-                                   ReadingSessionDto readingSession) {
+                                   ReadingSessionDto readingSession,
+                                   LocalDateTime lastEdited) {
 }
