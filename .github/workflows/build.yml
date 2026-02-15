@@ -1,0 +1,18 @@
+name: Create and publish container
+on:
+  push
+jobs:
+  build_container:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out Git repository
+        uses: actions/checkout@v6
+        with:
+          ref: main
+      - name: Build image
+        run: docker buildx build . -t ghcr.io/eye-tap/backend
+      - name: Log into ghcr.io
+        run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+      - name: Upload image to ghcr.io
+        run: docker push ghcr.io/eye-tap/backend:latest
+
