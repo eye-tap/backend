@@ -2,13 +2,9 @@ package ch.ethz.eyetap.service;
 
 
 import ch.ethz.eyetap.EntityMapper;
-import ch.ethz.eyetap.dto.AnnotationSessionDto;
-import ch.ethz.eyetap.dto.AnnotationsMetaDataDto;
-import ch.ethz.eyetap.dto.ShallowAnnotationSessionDto;
+import ch.ethz.eyetap.dto.*;
 import ch.ethz.eyetap.model.User;
-import ch.ethz.eyetap.model.annotation.AnnotationSession;
-import ch.ethz.eyetap.model.annotation.Annotator;
-import ch.ethz.eyetap.model.annotation.ReadingSession;
+import ch.ethz.eyetap.model.annotation.*;
 import ch.ethz.eyetap.model.survey.Survey;
 import ch.ethz.eyetap.repository.AnnotationSessionRepository;
 import jakarta.transaction.Transactional;
@@ -17,6 +13,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.util.HashSet;
 import java.util.Set;
 
 @Slf4j
@@ -29,6 +26,7 @@ public class AnnotationSessionService {
     private final AnnotationSessionRepository sessionRepository;
     private final AnnotationSessionRepository annotationSessionRepository;
     private final EntityMapper entityMapper;
+
 
     public Set<Long> annotationSessionIdsByUserId(Annotator annotator) {
         return this.annotationSessionRepository.findAllIdsByAnnotator(annotator);
@@ -74,7 +72,36 @@ public class AnnotationSessionService {
     }
 
     public AnnotationSessionDto calculateAnnotationSessionDto(final AnnotationSession annotationSession) {
-        return this.entityMapper.toAnnotationSessionDto(annotationSession,
-                this.calculateAnnotationsMetaData(annotationSession.getId()));
+        return annotationSessionDto(annotationSession, this.calculateAnnotationsMetaData(annotationSession.getId()));
+    }
+
+    private AnnotationSessionDto annotationSessionDto(final AnnotationSession annotationSession, AnnotationsMetaDataDto metaDataDto) {
+        Set<AnnotationDto> annotations = new HashSet<>();
+        for (UserAnnotation userAnnotation : annotationSession.getUserAnnotations()) {
+            AnnotationDto annotationDto = new AnnotationDto(userAnnotation.getId(),
+                    AnnotationType.ANNOTATED,
+                    new FixationDto(userAnnotation.getFixation().getId(),
+                            userAnnotation.getFixation().getX(),
+                            userAnnotation.getFixation().getY()),
+                    this.entityMapper.toBoundingBoxDto(userAnnotation.getCharacterBoundingBox()));
+            annotations.add(annotationDto);
+        }
+
+        for (MachineAnnotation machineAnnotation : annotationSession.getMachineAnnotations()) {
+            AnnotationDto annotationDto = new AnnotationDto(machineAnnotation.getId(),
+                    AnnotationType.MACHINE_ANNOTATED,
+                    new FixationDto(machineAnnotation.getFixation().getId(),
+                            machineAnnotation.getFixation().getX(),
+                            machineAnnotation.getFixation().getY()),
+                    this.entityMapper.toBoundingBoxDto(machineAnnotation.getCharacterBoundingBox()));
+            annotations.add(annotationDto);
+        }
+
+        return new AnnotationSessionDto(annotationSession.getId(),
+                annotationSession.getAnnotator().getId(),
+                annotations,
+                metaDataDto,
+                this.readingSessionService.createReadingSessionDto(annotationSession.getReadingSession()),
+                annotationSession.getLastEdited());
     }
 }

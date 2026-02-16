@@ -1,9 +1,7 @@
 package ch.ethz.eyetap.service;
 
-import ch.ethz.eyetap.dto.ImportFixationDto;
-import ch.ethz.eyetap.dto.ImportPreAnnotationDto;
-import ch.ethz.eyetap.dto.ImportReadingSessionDto;
-import ch.ethz.eyetap.dto.ShallowReadingSessionDto;
+import ch.ethz.eyetap.EntityMapper;
+import ch.ethz.eyetap.dto.*;
 import ch.ethz.eyetap.model.annotation.*;
 import ch.ethz.eyetap.repository.*;
 import jakarta.transaction.Transactional;
@@ -13,10 +11,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.time.LocalDateTime;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -29,6 +24,7 @@ public class ReadingSessionService {
     private final FixationRepository fixationRepository;
     private final CharacterBoundingBoxRepository characterBoundingBoxRepository;
     private final MachineAnnotationRepository machineAnnotationRepository;
+    private final EntityMapper entityMapper;
 
     @Transactional
     public ReadingSession save(ImportReadingSessionDto importReadingSessionDto) {
@@ -110,6 +106,19 @@ public class ReadingSessionService {
         );
     }
 
+    public ReadingSessionDto createReadingSessionDto(ReadingSession readingSession) {
+        return new ReadingSessionDto(
+                readingSession.getFixations()
+                        .stream().map(fixation -> new Tuple(fixation.getForeignId(), new FixationDto(fixation.getId(), fixation.getX(), fixation.getY())))
+                        .sorted(Comparator.comparingLong(Tuple::foreignId))
+                        .map(Tuple::value)
+                        .toList(),
+                this.entityMapper.toTextDto(readingSession.getText())
+        );
+    }
+
+    private record Tuple(Long foreignId, FixationDto value) {
+    }
 }
 
 

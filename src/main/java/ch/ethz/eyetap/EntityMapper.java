@@ -51,9 +51,6 @@ public interface EntityMapper {
         return value.getId();
     }
 
-    @Mapping(target = "annotationsMetaData", source = "annotationsMetaDataDto")
-    AnnotationSessionDto toAnnotationSessionDto(AnnotationSession annotationSession, AnnotationsMetaDataDto annotationsMetaDataDto);
-
     @Mapping(target = "textDto", expression = "java(toTextDto(readingSession.getText()))")
     ReadingSessionDto toReadingSessionDto(ReadingSession readingSession);
 

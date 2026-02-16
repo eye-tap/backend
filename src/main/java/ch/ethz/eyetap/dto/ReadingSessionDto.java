@@ -1,6 +1,6 @@
 package ch.ethz.eyetap.dto;
 
-import java.util.Set;
+import java.util.List;
 
-public record ReadingSessionDto(Set<FixationDto> fixations, TextDto textDto) {
+public record ReadingSessionDto(List<FixationDto> fixations, TextDto textDto) {
 }
