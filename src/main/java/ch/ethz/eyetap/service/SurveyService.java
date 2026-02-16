@@ -115,113 +115,73 @@ public class SurveyService {
     @SneakyThrows
     public SurveyDto mapToSurveyDto(Long surveyId) {
 
-        // for debugging purpose
+        // Get survey users separately
+        Survey survey = this.surveyRepository.findById(surveyId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Survey not found with id " + surveyId));
 
-        Survey survey = this.surveyRepository.findById(surveyId).orElseThrow();
-        for (AnnotationSession annotationSession : survey.getAnnotationSessions()) {
-            log.info("Associated annotation session with id {}", annotationSession.getId());
+        Set<Long> userIds = survey.getUsers().stream()
+                .map(User::getId)
+                .collect(Collectors.toCollection(LinkedHashSet::new));
+
+        // Run the row-wise query
+        List<Object[]> results = this.surveyRepository.findSurveyWithSessionsNative(surveyId);
+
+        if (results.isEmpty()) {
+            return new SurveyDto(survey.getId(), userIds, survey.getTitle(), survey.getDescription(), Collections.emptySet());
         }
 
-        // Run the native query
-        Object result = this.surveyRepository.findSurveyWithSessionsNative(surveyId);
+        Long surveyIdFromDb = ((Number) results.getFirst()[0]).longValue();
+        String surveyTitle = (String) results.getFirst()[1];
+        String surveyDescription = (String) results.getFirst()[2];
 
-        if (result == null) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Survey not found with id " + surveyId);
-        }
-
-        Object[] row = (Object[]) result;
-
-        Long id = ((Number) row[0]).longValue();
-        String title = (String) row[1];
-        String description = (String) row[2];
-
-        // Parse arrays
-        Set<Long> userIds = parseLongArray(row[3]);
-        Set<Long> annotationSessionIds = parseLongArray(row[4]);
-        Object[] annotatorIdsArr = row[5] != null ? (Object[]) row[5] : null;
-        Object[] readingSessionIdsArr = row[6] != null ? (Object[]) row[6] : null;
-        Object[] readingSessionReaderIdsArr = row[7] != null ? (Object[]) row[7] : null;
-        Object[] readingSessionTextIdsArr = row[8] != null ? (Object[]) row[8] : null;
-        Object[] readingSessionTextTitlesArr = row[9] != null ? (Object[]) row[9] : null;
-
-        // annotation counts come as Numbers, not arrays
-        Number totalAnnotations = (Number) row[10];
-        Number totalAnnotated = (Number) row[11];
-
-        Object[] lastEditedArr = row[12] != null ? (Object[]) row[12] : null;
-        Object[] uploadedAtArr = row[13] != null ? (Object[]) row[13] : null;
-
-        Object[] annotationSessionTextDescriptionArr = row[14] != null ? (Object[]) row[14] : null;
-        log.info("Annotation session ids {}", annotationSessionIds);
-        log.info("User ids {}", userIds);
-        log.info("Annotator ids arr {}", annotatorIdsArr);
-        log.info("Reading session ids arr {}", readingSessionIdsArr);
-        // Build ShallowAnnotationSessionDto
         Set<ShallowAnnotationSessionDto> sessions = new LinkedHashSet<>();
-        if (annotationSessionIds != null && !annotationSessionIds.isEmpty()) {
-            int n = annotationSessionIds.size();
-            Long[] sessionIds = annotationSessionIds.toArray(new Long[0]);
 
-            for (int i = 0; i < n; i++) {
+        for (Object[] row : results) {
 
-                LocalDateTime lastEdited =
-                        lastEditedArr != null && i < lastEditedArr.length
-                                ? (LocalDateTime) lastEditedArr[i]
-                                : null;
+            Long annotationSessionId = row[4] != null ? ((Number) row[4]).longValue() : null;
+            Long annotatorId = row[5] != null ? ((Number) row[5]).longValue() : null;
+            Long readingSessionId = row[6] != null ? ((Number) row[6]).longValue() : null;
+            Long readingSessionReaderId = row[7] != null ? ((Number) row[7]).longValue() : null;
+            Long textId = row[8] != null ? ((Number) row[8]).longValue() : null;
+            String textTitle = row[9] != null ? (String) row[9] : null;
+            int fixationCount = row[10] != null ? ((Number) row[10]).intValue() : 0;
+            int annotatedCount = row[11] != null ? ((Number) row[11]).intValue() : 0;
+            LocalDateTime lastEdited = row[12] != null ? (LocalDateTime) row[12] : null;
+            LocalDateTime uploadedAt = row[13] != null ? (LocalDateTime) row[13] : null;
+            String annotationSessionDescription = row[14] != null ? (String) row[14] : null;
 
-                LocalDateTime uploadedAt;
-                if (uploadedAtArr != null && i < uploadedAtArr.length) {
-                    uploadedAt = (LocalDateTime) uploadedAtArr[i];
-                } else {
-                    uploadedAt = null;
-                }
+            ShallowReadingSessionDto readingSession = new ShallowReadingSessionDto(
+                    readingSessionId,
+                    readingSessionReaderId,
+                    textId,
+                    textTitle,
+                    uploadedAt
+            );
 
-                String annotationSessionDescription =
-                        annotationSessionTextDescriptionArr != null && i < annotationSessionTextDescriptionArr.length
-                                ? (String) annotationSessionTextDescriptionArr[i]
-                                : null;
+            AnnotationsMetaDataDto metaData = new AnnotationsMetaDataDto(
+                    fixationCount,
+                    annotatedCount
+            );
 
+            ShallowAnnotationSessionDto session = new ShallowAnnotationSessionDto(
+                    annotationSessionId,
+                    annotatorId,
+                    metaData,
+                    readingSession,
+                    lastEdited,
+                    annotationSessionDescription
+            );
 
-                ShallowAnnotationSessionDto session = new ShallowAnnotationSessionDto(
-                        sessionIds[i],
-                        annotatorIdsArr != null && i < annotatorIdsArr.length ? ((Number) annotatorIdsArr[i]).longValue() : null,
-                        new AnnotationsMetaDataDto(
-                                totalAnnotations != null ? totalAnnotations.intValue() : 0,
-                                totalAnnotated != null ? totalAnnotated.intValue() : 0
-                        ),
-                        new ShallowReadingSessionDto(
-                                readingSessionIdsArr != null && i < readingSessionIdsArr.length ? ((Number) readingSessionIdsArr[i]).longValue() : null,
-                                readingSessionReaderIdsArr != null && i < readingSessionReaderIdsArr.length ? ((Number) readingSessionReaderIdsArr[i]).longValue() : null,
-                                readingSessionTextIdsArr != null && i < readingSessionTextIdsArr.length ? ((Number) readingSessionTextIdsArr[i]).longValue() : null,
-                                readingSessionTextTitlesArr != null && i < readingSessionTextTitlesArr.length ? (String) readingSessionTextTitlesArr[i] : null,
-                                uploadedAt
-                        ),
-                        lastEdited,
-                        annotationSessionDescription
-                );
-                sessions.add(session);
-            }
+            sessions.add(session);
         }
 
         return new SurveyDto(
-                id,
+                surveyIdFromDb,
                 userIds,
-                title,
-                description,
+                surveyTitle,
+                surveyDescription,
                 sessions
         );
-    }
-
-    // Helper: parse Object[] returned from ARRAY_AGG in Postgres
-    Set<Long> parseLongArray(Object arrObj) {
-        Set<Long> out = new LinkedHashSet<>();
-        if (arrObj != null) {
-            Object[] array = (Object[]) arrObj;
-            for (Object o : array) {
-                if (o != null) out.add(((Number) o).longValue());
-            }
-        }
-        return out;
     }
 
     public Survey getById(Long id) {
