@@ -4,21 +4,18 @@ import ch.ethz.eyetap.dto.ImportFixationDto;
 import ch.ethz.eyetap.dto.ImportPreAnnotationDto;
 import ch.ethz.eyetap.dto.ImportReadingSessionDto;
 import ch.ethz.eyetap.dto.ShallowReadingSessionDto;
-import ch.ethz.eyetap.model.annotation.Fixation;
-import ch.ethz.eyetap.model.annotation.Reader;
-import ch.ethz.eyetap.model.annotation.ReadingSession;
-import ch.ethz.eyetap.model.annotation.Text;
-import ch.ethz.eyetap.repository.FixationRepository;
-import ch.ethz.eyetap.repository.ReaderRepository;
-import ch.ethz.eyetap.repository.ReadingSessionRepository;
-import ch.ethz.eyetap.repository.TextRepository;
+import ch.ethz.eyetap.model.annotation.*;
+import ch.ethz.eyetap.repository.*;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -30,6 +27,8 @@ public class ReadingSessionService {
     private final ReaderRepository readerRepository;
     private final TextRepository textRepository;
     private final FixationRepository fixationRepository;
+    private final CharacterBoundingBoxRepository characterBoundingBoxRepository;
+    private final MachineAnnotationRepository machineAnnotationRepository;
 
     @Transactional
     public ReadingSession save(ImportReadingSessionDto importReadingSessionDto) {
@@ -72,7 +71,25 @@ public class ReadingSessionService {
         if (importReadingSessionDto.preAnnotations() != null) {
             for (final ImportPreAnnotationDto preAnnotation : importReadingSessionDto.preAnnotations()) {
                 String title = preAnnotation.title();
-                // TODO: 14.02.2026 do something here
+                Set<MachineAnnotation> machineAnnotations = new HashSet<>();
+                for (Map.Entry<Long, Long> longLongEntry : preAnnotation.fixationToCharacterBoxForeignIds().entrySet()) {
+                    MachineAnnotation machineAnnotation = MachineAnnotation.builder()
+                            .title(title)
+                            .characterBoundingBox(
+                                    this.characterBoundingBoxRepository.findById(
+                                            longLongEntry.getValue()
+                                    ).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "No character bounding box with id " + longLongEntry.getValue() + " found"))
+                            )
+                            .fixation(
+                                    this.fixationRepository.findById(
+                                            longLongEntry.getKey()
+                                    ).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "No fixation with id " + longLongEntry.getKey() + " found"))
+                            )
+                            .readingSession(readingSession)
+                            .build();
+                    machineAnnotations.add(machineAnnotation);
+                }
+                this.machineAnnotationRepository.saveAll(machineAnnotations);
             }
         }
 

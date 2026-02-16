@@ -47,13 +47,13 @@ public class AnnotationSessionService {
                 this.calculateAnnotationsMetaData(annotationSessionId),
                 this.readingSessionService.shallowReadingSessionDto(
                         this.sessionRepository.readingSessionByAnnotationSessionId(annotationSessionId)),
-                this.annotationSessionRepository.lastEditedByAnnotationSessionId(annotationSessionId)
+                this.annotationSessionRepository.lastEditedByAnnotationSessionId(annotationSessionId),
+                this.annotationSessionRepository.descriptionByAnnotationSessionId(annotationSessionId)
         );
     }
 
     public AnnotationSession create(Survey survey, User user, ReadingSession readingSession) {
         log.info("Creating annotation sessions for reading session {}", readingSession.getId());
-        // TODO: 13.02.2026 use pre annotations
         AnnotationSession annotationSession = new AnnotationSession();
         annotationSession.setAnnotator(user.getAnnotator());
         annotationSession.setReadingSession(readingSession);

@@ -3,6 +3,7 @@ package ch.ethz.eyetap.service;
 import ch.ethz.eyetap.dto.*;
 import ch.ethz.eyetap.model.User;
 import ch.ethz.eyetap.model.annotation.AnnotationSession;
+import ch.ethz.eyetap.model.annotation.MachineAnnotation;
 import ch.ethz.eyetap.model.annotation.ReadingSession;
 import ch.ethz.eyetap.model.survey.Survey;
 import ch.ethz.eyetap.repository.*;
@@ -32,6 +33,8 @@ public class SurveyService {
     private final UserRepository userRepository;
     private final AnnotationSessionService annotationSessionService;
     private final ReadingSessionRepository readingSessionRepository;
+    private final MachineAnnotationRepository machineAnnotationRepository;
+    private final AnnotationSessionRepository annotationSessionRepository;
 
     @Transactional
     @CacheEvict(value = "surveys_all", allEntries = true)
@@ -62,13 +65,30 @@ public class SurveyService {
         for (Long readingSessionId : createSurveyDto.readingSessionIds()) {
             ReadingSession readingSession = this.readingSessionRepository.findWithFixations(readingSessionId);
             readingSession.getText().getCharacterBoundingBoxes().size(); // just for loading the object
+            for (String annotationTitle : this.machineAnnotationRepository.findAllMachineAnnotationTitle(readingSessionId)) {
+                Set<MachineAnnotation> preAnnotations = this.machineAnnotationRepository.findByTitleAndReadingSession(annotationTitle, readingSessionId);
+                for (User user : userSet) {
+                    AnnotationSession annotationSession = this.annotationSessionService.create(survey, user, readingSession);
+                    annotationSessions.add(annotationSession);
+                    annotationSession.setMachineAnnotations(preAnnotations);
+                    annotationSession.setDescription(readingSession.getText().getTitle() + ", " + readingSession.getReader().getId() + ", " + annotationTitle);
+                    for (MachineAnnotation preAnnotation : preAnnotations) {
+                        preAnnotation.getAnnotationSessions().add(annotationSession);
+                    }
+                }
+                this.machineAnnotationRepository.saveAll(preAnnotations);
+            }
+
             for (User user : userSet) {
                 AnnotationSession annotationSession = this.annotationSessionService.create(survey, user, readingSession);
                 annotationSessions.add(annotationSession);
+                annotationSession.setDescription(readingSession.getText().getTitle() + ", " + readingSession.getReader().getId() + ", NO PRE-ANNOTATION");
+
             }
         }
 
         survey.setAnnotationSessions(annotationSessions);
+        this.annotationSessionRepository.saveAll(annotationSessions);
         Long id = this.surveyRepository.save(survey).getId();
         long intermediate = System.nanoTime();
         log.info("Survey created! ");
@@ -121,8 +141,13 @@ public class SurveyService {
         Number totalAnnotated = (Number) row[11];
 
         Object[] lastEditedArr = row[12] != null ? (Object[]) row[12] : null;
-        Object[] uploadedAtArr = row[13] != null ? (Object[]) row[12] : null;
+        Object[] uploadedAtArr = row[13] != null ? (Object[]) row[13] : null;
 
+        Object[] annotationSessionTextDescriptionArr = row[14] != null ? (Object[]) row[14] : null;
+        log.info("Annotation session ids {}", annotationSessionIds);
+        log.info("User ids {}", userIds);
+        log.info("Annotator ids arr {}", annotatorIdsArr);
+        log.info("Reading session ids arr {}", readingSessionIdsArr);
         // Build ShallowAnnotationSessionDto
         Set<ShallowAnnotationSessionDto> sessions = new LinkedHashSet<>();
         if (annotationSessionIds != null && !annotationSessionIds.isEmpty()) {
@@ -136,9 +161,16 @@ public class SurveyService {
                                 ? (LocalDateTime) lastEditedArr[i]
                                 : null;
 
-                LocalDateTime uploadedAt =
-                        lastEditedArr != null && i < lastEditedArr.length
-                                ? (LocalDateTime) uploadedAtArr[i]
+                LocalDateTime uploadedAt;
+                if (uploadedAtArr != null && i < uploadedAtArr.length) {
+                    uploadedAt = (LocalDateTime) uploadedAtArr[i];
+                } else {
+                    uploadedAt = null;
+                }
+
+                String annotationSessionDescription =
+                        annotationSessionTextDescriptionArr != null && i < annotationSessionTextDescriptionArr.length
+                                ? (String) annotationSessionTextDescriptionArr[i]
                                 : null;
 
 
@@ -156,7 +188,8 @@ public class SurveyService {
                                 readingSessionTextTitlesArr != null && i < readingSessionTextTitlesArr.length ? (String) readingSessionTextTitlesArr[i] : null,
                                 uploadedAt
                         ),
-                        lastEdited
+                        lastEdited,
+                        annotationSessionDescription
                 );
                 sessions.add(session);
             }

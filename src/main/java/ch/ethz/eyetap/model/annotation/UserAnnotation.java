@@ -1,23 +1,20 @@
 package ch.ethz.eyetap.model.annotation;
 
 import jakarta.persistence.*;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.*;
 
-@Entity
 @Getter
 @Setter
-@Table(name = "annotation")
-public class Annotation {
-
+@Builder
+@Entity
+@Table(name = "user_annotation")
+@NoArgsConstructor
+@AllArgsConstructor
+public class UserAnnotation {
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
     @Column(name = "id", nullable = false)
     private Long id;
-
-    @Enumerated(EnumType.STRING)
-    @Column(name = "annotation_type", nullable = false)
-    private AnnotationType annotationType;
 
     @ManyToOne
     @JoinColumn(name = "fixation_id")

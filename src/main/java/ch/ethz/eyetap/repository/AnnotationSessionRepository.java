@@ -27,12 +27,13 @@ public interface AnnotationSessionRepository extends JpaRepository<AnnotationSes
     long countTotalFixationsByAnnotationSessionId(@Param("annotationSessionId") Long id);
 
     @Query("""
-                SELECT COUNT(an)
+                SELECT COUNT(f) - COUNT(an)
                 FROM AnnotationSession a
-                JOIN a.annotations an
+                JOIN a.userAnnotations an
+                JOIN a.readingSession r
+                JOIN r.fixations f
                 WHERE a.id = :annotationSessionId
-                  AND (an.annotationType = ch.ethz.eyetap.model.annotation.AnnotationType.ANNOTATED
-                       OR an.annotationType = ch.ethz.eyetap.model.annotation.AnnotationType.MACHINE_ANNOTATED)
+                  AND r.id = a.readingSession.id
             """)
     long countSetAnnotationsByAnnotationSessionId(@Param("annotationSessionId") Long annotationSessionId);
 
@@ -57,6 +58,15 @@ public interface AnnotationSessionRepository extends JpaRepository<AnnotationSes
                 WHERE a.id = :annotationSessionId
             """)
     LocalDateTime lastEditedByAnnotationSessionId(
+            @Param("annotationSessionId") Long annotationSessionId
+    );
+
+    @Query("""
+                SELECT a.description
+                FROM AnnotationSession a
+                WHERE a.id = :annotationSessionId
+            """)
+    String descriptionByAnnotationSessionId(
             @Param("annotationSessionId") Long annotationSessionId
     );
 

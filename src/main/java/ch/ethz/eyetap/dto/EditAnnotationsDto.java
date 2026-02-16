@@ -7,7 +7,7 @@ import java.util.Map;
 public record EditAnnotationsDto(
 
         @Schema(
-                description = "Maps annotation IDs to character bounding box IDs",
+                description = "Maps fixation IDs to character bounding box IDs",
                 example = "{1: 42, 2: 43}"
         )
         Map<Long, Long> annotations) {

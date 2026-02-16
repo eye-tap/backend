@@ -30,8 +30,8 @@ public class AnnotationSession {
     @JoinColumn(name = "user_id", nullable = false)
     private Annotator annotator;
 
-    @OneToMany(mappedBy = "annotationSession", orphanRemoval = true)
-    private Set<Annotation> annotations = new LinkedHashSet<>();
+    @OneToMany(mappedBy = "annotationSession")
+    private Set<UserAnnotation> userAnnotations;
 
     @ManyToOne(optional = false)
     @JoinColumn(name = "reading_session_id", nullable = false)
@@ -44,12 +44,20 @@ public class AnnotationSession {
     @Column(name = "last_edited", nullable = false)
     private LocalDateTime lastEdited;
 
+    @ManyToMany
+    @JoinTable(name = "annotation_session_machineAnnotations",
+            joinColumns = @JoinColumn(name = "annotationSession_id"),
+            inverseJoinColumns = @JoinColumn(name = "machineAnnotations_id"))
+    private Set<MachineAnnotation> machineAnnotations = new LinkedHashSet<>();
+
+    @Column(name = "description")
+    private String description;
+
     @Override
     public String toString() {
         return new ToStringBuilder(this)
                 .append("id", id)
                 .append("annotator", annotator)
-                .append("annotations", annotations)
                 .append("readingSession", readingSession)
                 .append("survey", survey)
                 .toString();
