@@ -114,6 +114,14 @@ public class SurveyService {
 
     @SneakyThrows
     public SurveyDto mapToSurveyDto(Long surveyId) {
+
+        // for debugging purpose
+
+        Survey survey = this.surveyRepository.findById(surveyId).orElseThrow();
+        for (AnnotationSession annotationSession : survey.getAnnotationSessions()) {
+            log.info("Associated annotation session with id {}", annotationSession.getId());
+        }
+
         // Run the native query
         Object result = this.surveyRepository.findSurveyWithSessionsNative(surveyId);
 

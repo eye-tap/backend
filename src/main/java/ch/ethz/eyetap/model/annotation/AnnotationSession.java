@@ -45,7 +45,7 @@ public class AnnotationSession {
     private LocalDateTime lastEdited;
 
     @ManyToMany
-    @JoinTable(name = "annotation_session_machineAnnotations",
+    @JoinTable(name = "annotation_session_machine_annotations",
             joinColumns = @JoinColumn(name = "annotationSession_id"),
             inverseJoinColumns = @JoinColumn(name = "machineAnnotations_id"))
     private Set<MachineAnnotation> machineAnnotations = new LinkedHashSet<>();
