@@ -29,9 +29,12 @@ public class ReadingSessionService {
     @Transactional
     public ReadingSession save(ImportReadingSessionDto importReadingSessionDto) {
 
+
+
         ReadingSession readingSession = new ReadingSession();
 
-        Text text = textRepository.findByForeignId(importReadingSessionDto.textForeignId());
+        Text text = textRepository.findByForeignId(importReadingSessionDto.textForeignId())
+                        .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Text not found"));
         readingSession.setText(text);
 
         Reader reader = readerRepository.findByForeignId(importReadingSessionDto.readerForeignId());

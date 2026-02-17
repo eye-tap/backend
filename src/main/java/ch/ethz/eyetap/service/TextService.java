@@ -24,6 +24,11 @@ public class TextService {
 
     public Text save(ImportTextDto textDto) {
 
+        if (this.textRepository.findByForeignId(textDto.foreignId())
+                .isPresent()) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "Text already exists");
+        }
+
         Text text = new Text();
         text.setTitle(textDto.title());
         text.setForeignId(textDto.foreignId());
