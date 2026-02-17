@@ -5,6 +5,8 @@ on:
   push:
     paths:
       - pom.xml
+  workflow_dispatch:
+  
 jobs:
   build_container:
     runs-on: ubuntu-latest
