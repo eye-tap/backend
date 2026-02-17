@@ -67,7 +67,6 @@ public class AnnotationSessionService {
 
     public AnnotationSessionDto calculateAnnotationSessionDtoById(final Long id) {
         AnnotationSession referenceById = this.annotationSessionRepository.getReferenceById(id);
-        log.info("Calculating annotation session DTO for reading session {}", referenceById);
         return this.calculateAnnotationSessionDto(referenceById);
     }
 

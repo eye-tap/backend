@@ -27,13 +27,15 @@ public interface AnnotationSessionRepository extends JpaRepository<AnnotationSes
     long countTotalFixationsByAnnotationSessionId(@Param("annotationSessionId") Long id);
 
     @Query("""
-                SELECT COUNT(f) - COUNT(an)
-                FROM AnnotationSession a
-                JOIN a.userAnnotations an
-                JOIN a.readingSession r
-                JOIN r.fixations f
-                WHERE a.id = :annotationSessionId
-                  AND r.id = a.readingSession.id
+            SELECT 
+                (SELECT COUNT(uan) 
+                 FROM UserAnnotation uan 
+                 WHERE uan.annotationSession.id = :annotationSessionId)
+                +
+                (SELECT COUNT(man) 
+                 FROM AnnotationSession a2 
+                 JOIN a2.machineAnnotations man 
+                 WHERE a2.id = :annotationSessionId)
             """)
     long countSetAnnotationsByAnnotationSessionId(@Param("annotationSessionId") Long annotationSessionId);
 

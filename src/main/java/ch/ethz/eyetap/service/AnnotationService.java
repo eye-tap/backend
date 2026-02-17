@@ -3,6 +3,7 @@ package ch.ethz.eyetap.service;
 import ch.ethz.eyetap.dto.AnnotationSessionDto;
 import ch.ethz.eyetap.model.annotation.*;
 import ch.ethz.eyetap.repository.*;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -17,6 +18,7 @@ import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
+@Transactional
 public class AnnotationService {
 
 
@@ -25,7 +27,6 @@ public class AnnotationService {
     private final CharacterBoundingBoxRepository characterBoundingBoxRepository;
     private final AnnotationSessionService annotationSessionService;
     private final FixationRepository fixationRepository;
-    private final MachineAnnotationRepository machineAnnotationRepository;
 
     public AnnotationSessionDto annotate(Long sessionId, Map<Long, Long> annotations) {
 

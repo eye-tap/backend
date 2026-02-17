@@ -35,7 +35,6 @@ public class SurveyController {
     public SurveyCreatedDto create(@RequestBody CreateSurveyDto createSurveyDto,
                                    @AuthenticationPrincipal User user) {
         SurveyCreatedDto surveyCreatedDto = this.surveyService.create(user, createSurveyDto);
-        log.info("Created survey {}", surveyCreatedDto);
         HibernateStatisticsPrinter.print(this.sessionFactory.getStatistics());
         return surveyCreatedDto;
     }
