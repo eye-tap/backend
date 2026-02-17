@@ -3,6 +3,7 @@ package ch.ethz.eyetap.configuration;
 import ch.ethz.eyetap.filter.JwtFilter;
 import ch.ethz.eyetap.service.CustomUserDetailsService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -26,11 +27,13 @@ public class SecurityConfig {
 
     private final JwtFilter jwtFilter;
 
+    @Value("${allowed.cors.origins}")
+    String[] allowedOrigins;
+
     @Bean
     public SecurityFilterChain security(HttpSecurity http) throws Exception {
 
-        http.csrf(AbstractHttpConfigurer::disable);
-        // TODO: Correctly setup csrf protection
+        // http.csrf(AbstractHttpConfigurer::disable); <- uncomment this to disable csrf protection
 
         http.authorizeHttpRequests(auth -> auth
                 .requestMatchers("/auth/**").permitAll()
