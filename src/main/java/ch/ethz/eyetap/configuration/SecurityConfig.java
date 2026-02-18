@@ -3,6 +3,7 @@ package ch.ethz.eyetap.configuration;
 import ch.ethz.eyetap.filter.JwtFilter;
 import ch.ethz.eyetap.service.CustomUserDetailsService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -18,8 +19,10 @@ import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.cors.CorsConfiguration;
 
+import java.util.Arrays;
 import java.util.List;
 
+@Slf4j
 @EnableMethodSecurity
 @Configuration
 @RequiredArgsConstructor
@@ -34,7 +37,7 @@ public class SecurityConfig {
     public SecurityFilterChain security(HttpSecurity http) throws Exception {
 
         // http.csrf(AbstractHttpConfigurer::disable); <- uncomment this to disable csrf protection
-
+        log.info("Allowed origins: {}", Arrays.toString(allowedOrigins));
         http.authorizeHttpRequests(auth -> auth
                 .requestMatchers("/auth/**").permitAll()
                 .requestMatchers("/v3/api-docs/**").permitAll()
@@ -47,7 +50,7 @@ public class SecurityConfig {
 
         http.cors(cors -> cors.configurationSource(request -> {
             CorsConfiguration config = new CorsConfiguration();
-            config.setAllowedOrigins(List.of("http://localhost:8081"));
+            config.setAllowedOrigins(Arrays.stream(allowedOrigins).toList());
             config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
             config.setAllowedHeaders(List.of("*")); // allow Authorization, Content-Type, etc.
             config.setAllowCredentials(true);
