@@ -36,7 +36,7 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain security(HttpSecurity http) throws Exception {
 
-        // http.csrf(AbstractHttpConfigurer::disable); <- uncomment this to disable csrf protection
+        http.csrf(AbstractHttpConfigurer::disable); // <- remove this to enable csrf protection
         log.info("Allowed origins: {}", Arrays.toString(allowedOrigins));
         http.authorizeHttpRequests(auth -> auth
                 .requestMatchers("/auth/**").permitAll()
