@@ -25,19 +25,9 @@ public class AnnotationSessionController {
     public Set<ShallowAnnotationSessionDto> getSessions(
             @AuthenticationPrincipal User user
     ) {
-        // Get roles/authorities of the current user
-        Set<String> roles = user.getAuthorities()
-                .stream()
-                .map(GrantedAuthority::getAuthority)
-                .collect(Collectors.toSet());
-
-        System.out.println("Current user: " + user.getUsername());
-        System.out.println("Roles: " + roles);
-
         return this.annotationSessionService.annotationSessionIdsByUserId(user.getAnnotator()).stream()
                 .map(this.annotationSessionService::calculateShallowAnnotationSessionDto)
                 .collect(Collectors.toSet());
-
     }
 
     @GetMapping("/{id}")

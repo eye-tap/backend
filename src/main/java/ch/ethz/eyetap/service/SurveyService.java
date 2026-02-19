@@ -189,9 +189,10 @@ public class SurveyService {
     }
 
     @Cacheable("surveys_all")
-    public Set<SurveyDto> getAll() {
+    public Set<SurveyDto> getAll(Long userId) {
         return this.surveyRepository.findAll()
                 .stream()
+                .filter(survey -> hasAccessToSurvey(userId, survey))
                 .map(survey -> this.mapToSurveyDto(survey.getId()))
                 .collect(Collectors.toSet());
     }
@@ -203,5 +204,12 @@ public class SurveyService {
             this.annotationSessionService.delete(annotationSession);
         }
         this.surveyRepository.deleteById(id);
+    }
+
+    public boolean hasAccessToSurvey(Long userId, Survey survey){
+        return survey.getAdmin()
+                .stream()
+                .map(User::getId)
+                .anyMatch(adminId -> Objects.equals(adminId, userId));
     }
 }

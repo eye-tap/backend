@@ -13,9 +13,11 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.hibernate.SessionFactory;
 import org.hibernate.stat.Statistics;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -41,15 +43,21 @@ public class SurveyController {
 
     @PreAuthorize("hasRole('SURVEY_ADMIN')")
     @GetMapping("/{id}")
-    public SurveyDto get(@PathVariable("id") Long id) {
-        return this.entityMapper.toSurveyDto(this.surveyService.getById(id));
+    public SurveyDto get(@PathVariable("id") Long id,
+                         @AuthenticationPrincipal User user) {
+        Survey survey = this.surveyService.getById(id);
+        if (survey.getAdmin().stream().map(User::getId)
+                .noneMatch(adminId -> adminId.equals(user.getId()))) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Requested survey doesnt exist");
+        }
+        return this.entityMapper.toSurveyDto(survey);
     }
 
     @PreAuthorize("hasRole('SURVEY_ADMIN')")
     @GetMapping
     @Transactional
-    public Set<SurveyDto> getAll() {
-        Set<SurveyDto> collect = this.surveyService.getAll();
+    public Set<SurveyDto> getAll(@AuthenticationPrincipal User user) {
+        Set<SurveyDto> collect = this.surveyService.getAll(user.getId());
         HibernateStatisticsPrinter.print(this.sessionFactory.getStatistics());
         return collect;
     }
@@ -59,8 +67,8 @@ public class SurveyController {
     public void delete(@PathVariable("id") Long id,
                        @AuthenticationPrincipal User user) {
         Survey survey = this.surveyService.getById(id);
-        if (survey.getAdmin().stream().anyMatch(u -> u.getId().equals(user.getId()))) {
-            log.warn("User {} tried to delete foreign survey with id {}, this will later be removed!", user.getId(), id);
+        if (!this.surveyService.hasAccessToSurvey(user.getId(), survey)) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Requested survey doesnt exist");
         }
         this.surveyService.delete(id);
     }
