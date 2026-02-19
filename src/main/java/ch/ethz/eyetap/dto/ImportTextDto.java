@@ -7,7 +7,7 @@ import java.util.Set;
 /**
  * DTO for {@link Text}
  */
-public record ImportTextDto(String title, Long foreignId,
+public record ImportTextDto(String title, Long foreignId, String language,
                             Set<ImportCharacterBoundingBoxDto> characterBoundingBoxes,
                             Set<ImportWordBoundingBoxDto> wordBoundingBoxes,
                             byte[] backgroundImage) {

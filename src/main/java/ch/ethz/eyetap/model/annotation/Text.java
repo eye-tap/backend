@@ -21,7 +21,6 @@ public class Text {
     @Column(name = "title", unique = true)
     private String title;
 
-    // TODO: Add wordCount, totalPoints, annotatedPoints?
     @OneToMany(mappedBy = "text", cascade = CascadeType.ALL, orphanRemoval = true)
     private Set<ReadingSession> readingSessions = new LinkedHashSet<>();
 
@@ -38,6 +37,9 @@ public class Text {
 
     @Column(name = "foreign_id", unique = true)
     private Long foreignId;
+
+    @Column(name = "language")
+    private String language;
 
     @Override
     public String toString() {

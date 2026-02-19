@@ -33,6 +33,7 @@ public class TextService {
         text.setTitle(textDto.title());
         text.setForeignId(textDto.foreignId());
         text.setBackgroundImage(textDto.backgroundImage());
+        text.setLanguage(textDto.language());
 
         Set<CharacterBoundingBox> characterBoundingBoxes = new HashSet<>();
         for (ImportCharacterBoundingBoxDto characterBoundingBox : textDto.characterBoundingBoxes()) {
