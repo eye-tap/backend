@@ -8,5 +8,5 @@ import java.io.Serializable;
 /**
  * DTO for importing {@link Fixation}
  */
-public record ImportFixationDto(Long foreignId, Double x, Double y) {
+public record ImportFixationDto(Long foreignId, Double x, Double y, Double disagreement) {
 }

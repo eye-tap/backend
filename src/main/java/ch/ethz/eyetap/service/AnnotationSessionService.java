@@ -81,8 +81,11 @@ public class AnnotationSessionService {
                     AnnotationType.ANNOTATED,
                     new FixationDto(userAnnotation.getFixation().getId(),
                             userAnnotation.getFixation().getX(),
-                            userAnnotation.getFixation().getY()),
-                    this.entityMapper.toBoundingBoxDto(userAnnotation.getCharacterBoundingBox()));
+                            userAnnotation.getFixation().getY(),
+                            null),
+                    this.entityMapper.toBoundingBoxDto(userAnnotation.getCharacterBoundingBox()),
+                    null,
+                    null);
             annotations.add(annotationDto);
         }
 
@@ -91,8 +94,11 @@ public class AnnotationSessionService {
                     AnnotationType.MACHINE_ANNOTATED,
                     new FixationDto(machineAnnotation.getFixation().getId(),
                             machineAnnotation.getFixation().getX(),
-                            machineAnnotation.getFixation().getY()),
-                    this.entityMapper.toBoundingBoxDto(machineAnnotation.getCharacterBoundingBox()));
+                            machineAnnotation.getFixation().getY(),
+                            machineAnnotation.getFixation().getDisagreement()),
+                    this.entityMapper.toBoundingBoxDto(machineAnnotation.getCharacterBoundingBox()),
+                    machineAnnotation.getDGeomWeight(),
+                    machineAnnotation.getPShareWeight());
             annotations.add(annotationDto);
         }
 

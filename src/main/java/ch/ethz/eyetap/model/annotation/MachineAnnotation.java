@@ -43,6 +43,12 @@ public class MachineAnnotation {
     @ManyToMany(mappedBy = "machineAnnotations")
     private Set<AnnotationSession> annotationSessions = new LinkedHashSet<>();
 
+    @Column(name = "d_geom_weight")
+    private Double dGeomWeight;
+
+    @Column(name = "p_share_weight")
+    private Double pShareWeight;
+
     @Override
     public final boolean equals(Object o) {
         if (this == o) return true;

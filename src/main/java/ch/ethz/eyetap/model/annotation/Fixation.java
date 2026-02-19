@@ -27,4 +27,7 @@ public class Fixation {
     @Column(name = "foreign_id", nullable = false)
     private Long foreignId;
 
+    @Column(name = "disagreement")
+    private Double disagreement = 0.0;
+
 }

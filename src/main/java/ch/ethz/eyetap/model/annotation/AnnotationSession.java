@@ -53,6 +53,9 @@ public class AnnotationSession {
     @Column(name = "description")
     private String description;
 
+    @Column(name = "uses_partial_machine_annotation", nullable = false)
+    private Boolean usesPartialMachineAnnotation = false;
+
     @Override
     public String toString() {
         return new ToStringBuilder(this)

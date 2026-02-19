@@ -30,11 +30,10 @@ public class ReadingSessionService {
     public ReadingSession save(ImportReadingSessionDto importReadingSessionDto) {
 
 
-
         ReadingSession readingSession = new ReadingSession();
 
         Text text = textRepository.findByForeignId(importReadingSessionDto.textForeignId())
-                        .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Text not found"));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Text not found"));
         readingSession.setText(text);
 
         Reader reader = readerRepository.findByForeignId(importReadingSessionDto.readerForeignId());
@@ -62,6 +61,7 @@ public class ReadingSessionService {
                     fixation.setX(f.x());
                     fixation.setY(f.y());
                     fixation.setReadingSession(finalReadingSession);
+                    fixation.setDisagreement(f.disagreement());
                     return fixation;
                 }).toList();
 
@@ -71,19 +71,21 @@ public class ReadingSessionService {
             for (final ImportPreAnnotationDto preAnnotation : importReadingSessionDto.preAnnotations()) {
                 String title = preAnnotation.title();
                 Set<MachineAnnotation> machineAnnotations = new HashSet<>();
-                for (Map.Entry<Long, Long> longLongEntry : preAnnotation.fixationToCharacterBoxForeignIds().entrySet()) {
+                for (PreAnnotationValueDto preAnnotationValueDto : preAnnotation.annotations()) {
                     MachineAnnotation machineAnnotation = MachineAnnotation.builder()
                             .title(title)
                             .characterBoundingBox(
                                     this.characterBoundingBoxRepository.findById(
-                                            longLongEntry.getValue()
-                                    ).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "No character bounding box with id " + longLongEntry.getValue() + " found"))
+                                            preAnnotationValueDto.foreignCharacterBoxId()
+                                    ).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "No character bounding box with id " + preAnnotationValueDto.foreignCharacterBoxId() + " found"))
                             )
                             .fixation(
                                     this.fixationRepository.findById(
-                                            longLongEntry.getKey()
-                                    ).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "No fixation with id " + longLongEntry.getKey() + " found"))
+                                            preAnnotationValueDto.foreignFixationId()
+                                    ).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "No fixation with id " + preAnnotationValueDto.foreignFixationId() + " found"))
                             )
+                            .pShareWeight(preAnnotationValueDto.pShare())
+                            .dGeomWeight(preAnnotationValueDto.dGeom())
                             .readingSession(readingSession)
                             .build();
                     machineAnnotations.add(machineAnnotation);
@@ -112,7 +114,7 @@ public class ReadingSessionService {
     public ReadingSessionDto createReadingSessionDto(ReadingSession readingSession) {
         return new ReadingSessionDto(
                 readingSession.getFixations()
-                        .stream().map(fixation -> new Tuple(fixation.getForeignId(), new FixationDto(fixation.getId(), fixation.getX(), fixation.getY())))
+                        .stream().map(fixation -> new Tuple(fixation.getForeignId(), new FixationDto(fixation.getId(), fixation.getX(), fixation.getY(), fixation.getDisagreement())))
                         .sorted(Comparator.comparingLong(Tuple::foreignId))
                         .map(Tuple::value)
                         .toList(),

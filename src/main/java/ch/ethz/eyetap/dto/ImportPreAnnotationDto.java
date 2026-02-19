@@ -1,8 +1,9 @@
 package ch.ethz.eyetap.dto;
 
-import java.util.Map;
+import java.util.Set;
 
 public record ImportPreAnnotationDto(
         String title,
-        Map<Long, Long> fixationToCharacterBoxForeignIds) {
+        Set<PreAnnotationValueDto> annotations) {
+
 }
