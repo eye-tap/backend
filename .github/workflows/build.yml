@@ -10,8 +10,6 @@ jobs:
     steps:
       - name: Check out Git repository
         uses: actions/checkout@v6
-        with:
-          ref: main
       - name: Build image
         run: docker buildx build . -t ghcr.io/eye-tap/backend
       - name: Log into ghcr.io
