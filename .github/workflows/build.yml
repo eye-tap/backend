@@ -2,9 +2,6 @@ name: Create and publish container
 on:
   release:
     types: [published]
-  push:
-    paths:
-      - pom.xml
   workflow_dispatch:
   
 jobs:
