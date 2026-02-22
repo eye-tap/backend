@@ -30,7 +30,7 @@ public class UserController {
     private final SurveyRepository surveyRepository;
     private final AnnotationSessionService annotationSessionService;
 
-    @GetMapping("/{id}/")
+    @GetMapping("/survey/{id}/")
     public List<UserSurveyProgressDto> getUserSurveyProgress(@PathVariable Long id) {
         Survey survey = this.surveyRepository.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Survey with id " + id + " not found"));
