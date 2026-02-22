@@ -7,10 +7,13 @@ import ch.ethz.eyetap.model.User;
 import ch.ethz.eyetap.model.annotation.*;
 import ch.ethz.eyetap.model.survey.Survey;
 import ch.ethz.eyetap.repository.AnnotationSessionRepository;
+import ch.ethz.eyetap.repository.UserRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.time.LocalDateTime;
 import java.util.HashSet;
@@ -26,10 +29,26 @@ public class AnnotationSessionService {
     private final AnnotationSessionRepository sessionRepository;
     private final AnnotationSessionRepository annotationSessionRepository;
     private final EntityMapper entityMapper;
+    private final UserRepository userRepository;
 
 
     public Set<Long> annotationSessionIdsByUserId(Annotator annotator) {
         return this.annotationSessionRepository.findAllIdsByAnnotator(annotator);
+    }
+
+    public UserSurveyProgressDto getAnnotationSessionsUserId(Long userId, Annotator annotator) {
+        Set<Long> sessions = this.annotationSessionRepository.findAllIdsByAnnotator(annotator);
+        long total = sessions.size();
+        long done = 0;
+        for (Long sessionId : sessions) {
+            if (
+                    this.sessionRepository.countSetAnnotationsByAnnotationSessionId(sessionId)
+                            == this.sessionRepository.countTotalFixationsByAnnotationSessionId(sessionId)
+            ) {
+                done++;
+            }
+        }
+        return new UserSurveyProgressDto(userId, total, done);
     }
 
     public AnnotationsMetaDataDto calculateAnnotationsMetaData(Long annotationSessionId) {
