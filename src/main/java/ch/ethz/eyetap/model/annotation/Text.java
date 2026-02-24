@@ -11,7 +11,9 @@ import java.util.Set;
 @Getter
 @Setter
 @Entity
-@Table(name = "text")
+@Table(name = "text", uniqueConstraints = {
+        @UniqueConstraint(name = "uc_text_foreign_id_language", columnNames = {"foreign_id", "language"})
+})
 public class Text {
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
@@ -35,7 +37,7 @@ public class Text {
     @Column(name = "background_image")
     private byte[] backgroundImage;
 
-    @Column(name = "foreign_id", unique = true)
+    @Column(name = "foreign_id")
     private Long foreignId;
 
     @Column(name = "language")

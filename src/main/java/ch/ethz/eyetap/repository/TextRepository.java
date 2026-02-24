@@ -8,5 +8,5 @@ import java.util.Optional;
 public interface TextRepository extends JpaRepository<Text, Long> {
     boolean existsByTitle(String title);
 
-    Optional<Text> findByForeignId(Long foreignId);
+    Optional<Text> findByForeignIdAndLanguage(Long foreignId, String langauge);
 }

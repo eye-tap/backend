@@ -28,7 +28,9 @@ public class ImportController {
     @PreAuthorize("hasRole('SURVEY_ADMIN')")
     @PostMapping("/text")
     public ShallowTextDto text(@RequestBody ImportTextDto textDto) {
+        log.info("ImportTextDto: {}", textDto);
         Text save = this.textService.save(textDto);
+        log.info("Import of text {} done", save.getTitle());
         return new ShallowTextDto(save.getId(), save.getTitle());
     }
 

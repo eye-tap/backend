@@ -6,6 +6,7 @@ import ch.ethz.eyetap.model.annotation.*;
 import ch.ethz.eyetap.repository.*;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
@@ -14,6 +15,7 @@ import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class ReadingSessionService {
@@ -28,11 +30,11 @@ public class ReadingSessionService {
 
     @Transactional
     public ReadingSession save(ImportReadingSessionDto importReadingSessionDto) {
-
+        log.info("Importing reading session {}", importReadingSessionDto);
 
         ReadingSession readingSession = new ReadingSession();
 
-        Text text = textRepository.findByForeignId(importReadingSessionDto.textForeignId())
+        Text text = textRepository.findByForeignIdAndLanguage(importReadingSessionDto.textForeignId(), importReadingSessionDto.language())
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Text not found"));
         readingSession.setText(text);
 
@@ -47,7 +49,9 @@ public class ReadingSessionService {
         readingSession.setUploadedAt(LocalDateTime.now());
         readingSession = readingSessionRepository.save(readingSession);
 
-        // Batch insert fixations
+        // ----------------------------
+        // SAVE FIXATIONS
+        // ----------------------------
         Set<Long> existingIds = fixationRepository.findAllByIdIsIn(
                 importReadingSessionDto.fixations().stream().map(ImportFixationDto::foreignId).toList()
         ).stream().map(Fixation::getForeignId).collect(Collectors.toSet());
@@ -67,30 +71,51 @@ public class ReadingSessionService {
 
         fixationRepository.saveAll(newFixations);
 
+        // Build a map of foreignId -> Fixation for pre-annotation lookup
+        Map<Long, Fixation> fixationMap = new HashMap<>();
+        for (Fixation f : newFixations) {
+            fixationMap.put(f.getForeignId(), f);
+        }
+        // Add existing fixations if needed
+        fixationRepository.findAllByIdIsIn(new ArrayList<>(existingIds)).forEach(f -> fixationMap.put(f.getForeignId(), f));
+
+        // ----------------------------
+        // SAVE PRE-ANNOTATIONS
+        // ----------------------------
         if (importReadingSessionDto.preAnnotations() != null) {
             for (final ImportPreAnnotationDto preAnnotation : importReadingSessionDto.preAnnotations()) {
                 String title = preAnnotation.title();
                 Set<MachineAnnotation> machineAnnotations = new HashSet<>();
                 for (PreAnnotationValueDto preAnnotationValueDto : preAnnotation.annotations()) {
+                    if (preAnnotationValueDto.foreignCharacterBoxId() == null) {
+                        continue; // skip if character reference is missing
+                    }
+
                     MachineAnnotation machineAnnotation = MachineAnnotation.builder()
                             .title(title)
                             .characterBoundingBox(
-                                    this.characterBoundingBoxRepository.findById(
-                                            preAnnotationValueDto.foreignCharacterBoxId()
-                                    ).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "No character bounding box with id " + preAnnotationValueDto.foreignCharacterBoxId() + " found"))
+                                    characterBoundingBoxRepository.findById(preAnnotationValueDto.foreignCharacterBoxId())
+                                            .orElseThrow(() -> new ResponseStatusException(
+                                                    HttpStatus.NOT_FOUND,
+                                                    "No character bounding box with id " + preAnnotationValueDto.foreignCharacterBoxId() + " found"
+                                            ))
                             )
                             .fixation(
-                                    this.fixationRepository.findById(
-                                            preAnnotationValueDto.foreignFixationId()
-                                    ).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "No fixation with id " + preAnnotationValueDto.foreignFixationId() + " found"))
+                                    fixationMap.getOrDefault(preAnnotationValueDto.foreignFixationId(), null)
                             )
                             .pShareWeight(preAnnotationValueDto.pShare())
                             .dGeomWeight(preAnnotationValueDto.dGeom())
                             .readingSession(readingSession)
                             .build();
+
+                    if (machineAnnotation.getFixation() == null) {
+                        log.warn("Skipping pre-annotation for non-existing fixation id {}", preAnnotationValueDto.foreignFixationId());
+                        continue;
+                    }
+
                     machineAnnotations.add(machineAnnotation);
                 }
-                this.machineAnnotationRepository.saveAll(machineAnnotations);
+                machineAnnotationRepository.saveAll(machineAnnotations);
             }
         }
 
