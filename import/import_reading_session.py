@@ -1,4 +1,4 @@
-# File: import_reading_sessions.py
+import argparse
 import time
 
 import pandas as pd
@@ -32,7 +32,6 @@ credentials = {
 # =========================
 
 def get_jwt_token():
-    """Attempt login, if fails, register and retry."""
     try:
         response = requests.post(LOGIN_URL, json={"id": credentials["id"], "password": credentials["password"]})
         response.raise_for_status()
@@ -47,8 +46,7 @@ def get_jwt_token():
         reg_resp = requests.post(REGISTER_URL, json=reg_body)
         reg_resp.raise_for_status()
         print("Registration successful. Waiting 1s for account propagation...")
-        time.sleep(1)  # small delay to ensure backend is ready
-        # Retry login
+        time.sleep(1)
         response = requests.post(LOGIN_URL, json={"id": credentials["id"], "password": credentials["password"]})
         response.raise_for_status()
     token = response.json()["token"]
@@ -72,24 +70,14 @@ def post_json(url, payload):
         response.raise_for_status()
     return response.json()
 
-# =========================
-# BUILD READING SESSION DTO
-# =========================
-
 def build_import_reading_session_dto(fix_df, annot_df, text_id, lang):
-    """
-    Build ImportReadingSessionDto from fixation and annotation data.
-    Ensures all pre-annotations reference valid fixations and characters.
-    """
     if fix_df.empty:
         return None
 
-    # Reader ID is sub_id
     reader_id = int(fix_df.iloc[0]["sub_id"])
 
-    # Fixations
     fixations = []
-    valid_fix_ids = set()  # track IDs that actually exist
+    valid_fix_ids = set()
     for _, row in fix_df.iterrows():
         fix_id = int(row["fix_uid"])
         fixations.append({
@@ -100,15 +88,11 @@ def build_import_reading_session_dto(fix_df, annot_df, text_id, lang):
         })
         valid_fix_ids.add(fix_id)
 
-    # Pre-annotations grouped by algorithm_id
     pre_annotations = []
-
-    # Only keep annotation rows where fix_uid exists and char_uid is not NaN
     annot_df_filtered = annot_df[
         annot_df["fix_uid"].isin(valid_fix_ids) &
         annot_df["char_uid"].notna()
     ]
-
     grouped = annot_df_filtered.groupby("algorithm_id")
     for algorithm_id, group in grouped:
         values = []
@@ -136,18 +120,19 @@ def build_import_reading_session_dto(fix_df, annot_df, text_id, lang):
 # MAIN EXECUTION
 # =========================
 
-def main():
+def main(languages_to_import=None):
     print("Loading CSV files...")
     fix_df = pd.read_csv(FIX_CSV)
     annot_df = pd.read_csv(ANNOT_CSV)
 
     print("Importing reading sessions...")
 
-    # Group by reader + text + language
     for (sub_id, text_id, lang), fix_group in fix_df.groupby(["sub_id", "text_id", "lang"]):
-        print(f"Processing reading session reader={sub_id}, text={text_id}, lang={lang}")
+        if languages_to_import and lang not in languages_to_import:
+            print(f"Skipping reading session reader={sub_id}, text={text_id}, lang={lang} due to language filter")
+            continue
 
-        # Filter annotations for this reader/text
+        print(f"Processing reading session reader={sub_id}, text={text_id}, lang={lang}")
         annot_group = annot_df[annot_df["fix_uid"].isin(fix_group["fix_uid"])]
 
         reading_session_dto = build_import_reading_session_dto(fix_group, annot_group, text_id, lang)
@@ -164,5 +149,15 @@ def main():
 
     print("Done.")
 
+
 if __name__ == "__main__":
-    main()
+    import argparse
+    parser = argparse.ArgumentParser(description="Import reading sessions with optional language filter")
+    parser.add_argument(
+        "--languages",
+        nargs="*",
+        help="Languages to import (e.g., --languages en gr). If omitted, all languages are imported."
+    )
+    args = parser.parse_args()
+    languages_set = set(args.languages) if args.languages else None
+    main(languages_set)
