@@ -63,7 +63,9 @@ TOKEN = get_jwt_token()
 
 def encode_background_image_for_text(text_id, language):
     folder_path = os.path.join(TEXT_IMAGE_FOLDER, language)
-    image_path = os.path.join(folder_path, f"Item_{text_id}.png")
+    print(f"Trying to resolve Item_{"{:02d}".format(text_id)}.png")
+    image_path = os.path.join(folder_path, f"Item_{"{:02d}".format(text_id)}.png")
+    print(f"Image path {image_path}")
     if not os.path.exists(image_path):
         return None
     with open(image_path, "rb") as img_file:
