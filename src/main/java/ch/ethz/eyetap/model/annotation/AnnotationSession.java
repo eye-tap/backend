@@ -19,7 +19,9 @@ Association between user and annotation group
 @Getter
 @Setter
 @Entity
-@Table(name = "annotation_session")
+@Table(name = "annotation_session", indexes = {
+        @Index(name = "idx_annotationsession", columnList = "survey_id")
+})
 public class AnnotationSession {
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)

@@ -7,6 +7,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Set;
 
 public interface AnnotationSessionRepository extends JpaRepository<AnnotationSession, Long> {
@@ -71,5 +72,22 @@ public interface AnnotationSessionRepository extends JpaRepository<AnnotationSes
     String descriptionByAnnotationSessionId(
             @Param("annotationSessionId") Long annotationSessionId
     );
+
+    @Query("""
+                SELECT a FROM AnnotationSession a
+                JOIN FETCH a.readingSession rs
+                JOIN FETCH a.annotator an
+                WHERE a.survey.id = :surveyId
+            """)
+    List<AnnotationSession> findBySurveyIdWithAnnotatorAndReadingSession(@Param("surveyId") Long surveyId);
+
+    @Query("""
+                SELECT a.id, 
+                       (SELECT COUNT(ua) FROM UserAnnotation ua WHERE ua.annotationSession.id = a.id) +
+                       (SELECT COUNT(ma) FROM MachineAnnotation ma JOIN ma.annotationSessions mas WHERE mas.id = a.id)
+                FROM AnnotationSession a
+                WHERE a.id IN :annotationSessionIds
+            """)
+    List<Object[]> findAnnotatedCounts(@Param("annotationSessionIds") List<Long> annotationSessionIds);
 
 }

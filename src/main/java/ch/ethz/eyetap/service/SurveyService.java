@@ -5,6 +5,7 @@ import ch.ethz.eyetap.model.User;
 import ch.ethz.eyetap.model.annotation.AnnotationSession;
 import ch.ethz.eyetap.model.annotation.MachineAnnotation;
 import ch.ethz.eyetap.model.annotation.ReadingSession;
+import ch.ethz.eyetap.model.annotation.Text;
 import ch.ethz.eyetap.model.survey.Survey;
 import ch.ethz.eyetap.repository.*;
 import jakarta.transaction.Transactional;
@@ -35,6 +36,7 @@ public class SurveyService {
     private final ReadingSessionRepository readingSessionRepository;
     private final MachineAnnotationRepository machineAnnotationRepository;
     private final AnnotationSessionRepository annotationSessionRepository;
+    private final FixationRepository fixationRepository;
 
     @Transactional
     @CacheEvict(value = "surveys_all", allEntries = true)
@@ -114,48 +116,58 @@ public class SurveyService {
 
     @SneakyThrows
     public SurveyDto mapToSurveyDto(Long surveyId) {
-
-        // Get survey users separately
-        Survey survey = this.surveyRepository.findById(surveyId)
+        // Load survey + users
+        Survey survey = surveyRepository.findById(surveyId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Survey not found with id " + surveyId));
 
         Set<Long> userIds = survey.getUsers().stream()
                 .map(User::getId)
                 .collect(Collectors.toCollection(LinkedHashSet::new));
 
-        // Run the row-wise query
-        List<Object[]> results = this.surveyRepository.findSurveyWithSessionsNative(surveyId);
+        List<AnnotationSession> sessions = annotationSessionRepository.findBySurveyIdWithAnnotatorAndReadingSession(surveyId);
 
-        if (results.isEmpty()) {
-            return new SurveyDto(survey.getId(), userIds, survey.getTitle(), survey.getDescription(), Collections.emptySet());
+        if (sessions.isEmpty()) {
+            return new SurveyDto(
+                    survey.getId(),
+                    userIds,
+                    survey.getTitle(),
+                    survey.getDescription(),
+                    Collections.emptySet()
+            );
         }
 
-        Long surveyIdFromDb = ((Number) results.getFirst()[0]).longValue();
-        String surveyTitle = (String) results.getFirst()[1];
-        String surveyDescription = (String) results.getFirst()[2];
+        List<Long> sessionIds = sessions.stream().map(AnnotationSession::getId).toList();
+        List<Long> readingSessionIds = sessions.stream()
+                .map(s -> s.getReadingSession().getId())
+                .toList();
 
-        Set<ShallowAnnotationSessionDto> sessions = new LinkedHashSet<>();
+        List<Object[]> fixationCountList = fixationRepository.findFixationCounts(readingSessionIds);
+        Map<Long, Integer> fixationCounts = fixationCountList.stream()
+                .collect(Collectors.toMap(r -> (Long) r[0], r -> ((Number) r[1]).intValue()));
 
-        for (Object[] row : results) {
+        List<Object[]> annotatedCountList = annotationSessionRepository.findAnnotatedCounts(sessionIds);
+        Map<Long, Integer> annotatedCounts = annotatedCountList.stream()
+                .collect(Collectors.toMap(r -> (Long) r[0], r -> ((Number) r[1]).intValue()));
 
-            Long annotationSessionId = row[4] != null ? ((Number) row[4]).longValue() : null;
-            Long annotatorId = row[5] != null ? ((Number) row[5]).longValue() : null;
-            Long readingSessionId = row[6] != null ? ((Number) row[6]).longValue() : null;
-            Long readingSessionReaderId = row[7] != null ? ((Number) row[7]).longValue() : null;
-            Long textId = row[8] != null ? ((Number) row[8]).longValue() : null;
-            String textTitle = row[9] != null ? (String) row[9] : null;
-            int fixationCount = row[10] != null ? ((Number) row[10]).intValue() : 0;
-            int annotatedCount = row[11] != null ? ((Number) row[11]).intValue() : 0;
-            LocalDateTime lastEdited = row[12] != null ? (LocalDateTime) row[12] : null;
-            LocalDateTime uploadedAt = row[13] != null ? (LocalDateTime) row[13] : null;
-            String annotationSessionDescription = row[14] != null ? (String) row[14] : null;
+        Set<ShallowAnnotationSessionDto> sessionDtos = new LinkedHashSet<>();
 
-            ShallowReadingSessionDto readingSession = new ShallowReadingSessionDto(
+        for (AnnotationSession a : sessions) {
+            ReadingSession rs = a.getReadingSession();
+            Long readingSessionId = rs.getId();
+            Long readingSessionReaderId = rs.getReader().getId();
+            Text t = rs.getText();
+            Long textId = t.getId();
+            String textTitle = t.getTitle();
+
+            int fixationCount = fixationCounts.getOrDefault(readingSessionId, 0);
+            int annotatedCount = annotatedCounts.getOrDefault(a.getId(), 0);
+
+            ShallowReadingSessionDto readingSessionDto = new ShallowReadingSessionDto(
                     readingSessionId,
                     readingSessionReaderId,
                     textId,
                     textTitle,
-                    uploadedAt
+                    rs.getUploadedAt()
             );
 
             AnnotationsMetaDataDto metaData = new AnnotationsMetaDataDto(
@@ -163,24 +175,24 @@ public class SurveyService {
                     annotatedCount
             );
 
-            ShallowAnnotationSessionDto session = new ShallowAnnotationSessionDto(
-                    annotationSessionId,
-                    annotatorId,
+            ShallowAnnotationSessionDto sessionDto = new ShallowAnnotationSessionDto(
+                    a.getId(),
+                    a.getAnnotator().getUser().getId(),
                     metaData,
-                    readingSession,
-                    lastEdited,
-                    annotationSessionDescription
+                    readingSessionDto,
+                    a.getLastEdited(),
+                    a.getDescription()
             );
 
-            sessions.add(session);
+            sessionDtos.add(sessionDto);
         }
 
         return new SurveyDto(
-                surveyIdFromDb,
+                survey.getId(),
                 userIds,
-                surveyTitle,
-                surveyDescription,
-                sessions
+                survey.getTitle(),
+                survey.getDescription(),
+                sessionDtos
         );
     }
 

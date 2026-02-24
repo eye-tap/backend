@@ -12,7 +12,10 @@ import java.util.Set;
 @Setter
 @Entity
 @Builder
-@Table(name = "machine_annotation")
+@Table(name = "machine_annotation", indexes = {
+        @Index(name = "idx_machineannotation_title", columnList = "title"),
+        @Index(name = "idx_machineannotation", columnList = "fixation_id")
+})
 @NoArgsConstructor
 @AllArgsConstructor
 public class MachineAnnotation {
