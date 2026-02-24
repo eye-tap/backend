@@ -9,7 +9,9 @@ import java.util.Objects;
 @Getter
 @Setter
 @Entity
-@Table(name = "word_bounding_box")
+@Table(name = "word_bounding_box", indexes = {
+        @Index(name = "idx_wordboundingbox", columnList = "foreign_id")
+})
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor

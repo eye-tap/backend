@@ -30,7 +30,6 @@ public class ReadingSessionService {
 
     @Transactional
     public ReadingSession save(ImportReadingSessionDto importReadingSessionDto) {
-        log.info("Importing reading session {}", importReadingSessionDto);
 
         ReadingSession readingSession = new ReadingSession();
 
@@ -83,6 +82,18 @@ public class ReadingSessionService {
         // SAVE PRE-ANNOTATIONS
         // ----------------------------
         if (importReadingSessionDto.preAnnotations() != null) {
+
+            Set<Long> allCharIds = importReadingSessionDto.preAnnotations().stream()
+                    .flatMap(pa -> pa.annotations().stream())
+                    .map(PreAnnotationValueDto::foreignCharacterBoxId)
+                    .filter(Objects::nonNull)
+                    .collect(Collectors.toSet());
+
+            Map<Long, CharacterBoundingBox> charBoxMap = characterBoundingBoxRepository
+                    .findAllByForeignIdIn(allCharIds)
+                    .stream()
+                    .collect(Collectors.toMap(CharacterBoundingBox::getForeignId, cb -> cb));
+
             for (final ImportPreAnnotationDto preAnnotation : importReadingSessionDto.preAnnotations()) {
                 String title = preAnnotation.title();
                 Set<MachineAnnotation> machineAnnotations = new HashSet<>();
@@ -91,15 +102,17 @@ public class ReadingSessionService {
                         continue; // skip if character reference is missing
                     }
 
+                    CharacterBoundingBox cbb = charBoxMap.get(preAnnotationValueDto.foreignCharacterBoxId());
+                    if (cbb == null){
+                        throw new ResponseStatusException(
+                                HttpStatus.NOT_FOUND,
+                                "No character bounding box with id " + preAnnotationValueDto.foreignCharacterBoxId() + " found"
+                        );
+                    }
+
                     MachineAnnotation machineAnnotation = MachineAnnotation.builder()
                             .title(title)
-                            .characterBoundingBox(
-                                    characterBoundingBoxRepository.findById(preAnnotationValueDto.foreignCharacterBoxId())
-                                            .orElseThrow(() -> new ResponseStatusException(
-                                                    HttpStatus.NOT_FOUND,
-                                                    "No character bounding box with id " + preAnnotationValueDto.foreignCharacterBoxId() + " found"
-                                            ))
-                            )
+                            .characterBoundingBox(cbb)
                             .fixation(
                                     fixationMap.getOrDefault(preAnnotationValueDto.foreignFixationId(), null)
                             )

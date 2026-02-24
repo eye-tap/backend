@@ -28,9 +28,8 @@ public class ImportController {
     @PreAuthorize("hasRole('SURVEY_ADMIN')")
     @PostMapping("/text")
     public ShallowTextDto text(@RequestBody ImportTextDto textDto) {
-        log.info("ImportTextDto: {}", textDto);
         Text save = this.textService.save(textDto);
-        log.info("Import of text {} done", save.getTitle());
+        log.info("Text {} saved", save.getTitle());
         return new ShallowTextDto(save.getId(), save.getTitle());
     }
 
@@ -38,6 +37,7 @@ public class ImportController {
     @PostMapping("/reading-session")
     public ShallowReadingSessionDto readingSession(@RequestBody ImportReadingSessionDto importReadingSessionDto) {
         ReadingSession saved = this.readingSessionService.save(importReadingSessionDto);
+        log.info("Reading session {} saved", saved.getId());
         return new ShallowReadingSessionDto(saved.getId(),
                 saved.getReader().getId(),
                 saved.getText().getId(),
