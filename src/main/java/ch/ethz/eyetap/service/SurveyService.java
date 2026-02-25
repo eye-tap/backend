@@ -218,10 +218,13 @@ public class SurveyService {
         this.surveyRepository.deleteById(id);
     }
 
+    @Transactional
     public boolean hasAccessToSurvey(Long userId, Survey survey){
-        return survey.getAdmin()
+        boolean access = survey.getAdmin()
                 .stream()
                 .map(User::getId)
                 .anyMatch(adminId -> Objects.equals(adminId, userId));
+        log.info("User {} has access for survey {}: {}", userId, survey.getId(), access);
+        return access;
     }
 }

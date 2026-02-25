@@ -6,6 +6,7 @@ import ch.ethz.eyetap.model.survey.Survey;
 import ch.ethz.eyetap.repository.SurveyRepository;
 import ch.ethz.eyetap.service.SurveyService;
 import ch.ethz.eyetap.service.export.ExportService;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -26,6 +27,7 @@ public class ExportController {
 
     @PreAuthorize("hasRole('SURVEY_ADMIN')")
     @GetMapping("/survey/{id}")
+    @Transactional
     public ResponseEntity<byte[]> exportSurvey(@PathVariable Long id,
                                                @AuthenticationPrincipal User user) {
 

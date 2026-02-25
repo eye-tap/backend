@@ -11,6 +11,14 @@ public class ExportAnnotationRow {
     private Long charUid;
     @CsvBindByName
     private Long annotatorId;
+
     @CsvBindByName
     private Long annotationSessionId;
+
+    @CsvBindByName
+    private Long textUid;
+    @CsvBindByName
+    private String textLang;
+    @CsvBindByName
+    private Long readerUid;
 }

@@ -62,6 +62,7 @@ public class SurveyController {
 
     @PreAuthorize("hasRole('SURVEY_ADMIN')")
     @DeleteMapping("/{id}")
+    @Transactional
     public void delete(@PathVariable("id") Long id,
                        @AuthenticationPrincipal User user) {
         Survey survey = this.surveyService.getById(id);
