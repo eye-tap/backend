@@ -11,9 +11,7 @@ import ch.ethz.eyetap.repository.UserRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
-import org.springframework.web.server.ResponseStatusException;
 
 import java.time.LocalDateTime;
 import java.util.HashSet;
@@ -29,8 +27,6 @@ public class AnnotationSessionService {
     private final AnnotationSessionRepository sessionRepository;
     private final AnnotationSessionRepository annotationSessionRepository;
     private final EntityMapper entityMapper;
-    private final UserRepository userRepository;
-
 
     public Set<Long> annotationSessionIdsByUserId(Annotator annotator) {
         return this.annotationSessionRepository.findAllIdsByAnnotator(annotator);
@@ -69,15 +65,15 @@ public class AnnotationSessionService {
         );
     }
 
-    public AnnotationSession create(Survey survey, User user, ReadingSession readingSession) {
-        log.info("Creating annotation sessions for reading session {}", readingSession.getId());
+    public AnnotationSession initialize(Survey survey, User user, ReadingSession readingSession) {
+        // log.info("Creating annotation sessions for reading session {}", readingSession.getId());
         AnnotationSession annotationSession = new AnnotationSession();
         annotationSession.setAnnotator(user.getAnnotator());
         annotationSession.setReadingSession(readingSession);
         annotationSession.setSurvey(survey);
         annotationSession.setLastEdited(LocalDateTime.now());
 
-        return this.annotationSessionRepository.save(annotationSession);
+        return annotationSession;
     }
 
     public void delete(AnnotationSession annotationSession) {

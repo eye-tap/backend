@@ -16,6 +16,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.util.ArrayList;
+import java.util.List;
+
 @Slf4j
 @Service
 @RequiredArgsConstructor
@@ -54,21 +57,6 @@ public class AuthService {
     }
 
     /**
-     * Creates a new survey participant with a generated password.
-     */
-    @Transactional
-    public SurveyParticipant createSurveyParticipant(String username) {
-        User user = new User();
-        user.setUsername(username);
-
-        String password = passwordGeneratorService.genPassword(8);
-
-        user = createUserWithRole(user, password, ROLE_PARTICIPANT);
-
-        return new SurveyParticipant(user, password);
-    }
-
-    /**
      * Authenticate a user and return a JWT token.
      */
     public String login(String username, String password) {
@@ -104,20 +92,43 @@ public class AuthService {
         user.setPassword(passwordEncoder.encode(rawPassword));
         user.setRole(role);
 
-        // Save user first
-        User savedUser = userRepository.save(user);
-
         // Create annotator and link
         Annotator annotator = new Annotator();
-        annotator.setUser(savedUser);
-        annotator = annotatorRepository.save(annotator);
-
-        savedUser.setAnnotator(annotator);
+        annotator.setUser(user);
+        user.setAnnotator(annotator);
 
         // Save user again with annotator link
-        return userRepository.save(savedUser);
+        return userRepository.save(user);
     }
 
     public record SurveyParticipant(User user, String password) {
     }
+
+    @Transactional
+    public List<SurveyParticipant> createSurveyParticipantsBatch(List<String> usernames) {
+        List<User> usersToSave = new ArrayList<>();
+        List<SurveyParticipant> participants = new ArrayList<>();
+
+        for (String username : usernames) {
+            User user = new User();
+            user.setUsername(username);
+            String password = passwordGeneratorService.genPassword(8);
+            user.setPassword(passwordEncoder.encode(password));
+            user.setRole(ROLE_PARTICIPANT);
+
+            Annotator annotator = new Annotator();
+            annotator.setUser(user);
+            user.setAnnotator(annotator);
+
+            usersToSave.add(user);
+            participants.add(new SurveyParticipant(user, password));
+        }
+
+        // Save all users in one batch
+        userRepository.saveAll(usersToSave);
+
+        return participants;
+    }
 }
+
+

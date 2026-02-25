@@ -13,8 +13,8 @@ import java.util.Set;
 @Entity
 @Builder
 @Table(name = "machine_annotation", indexes = {
-        @Index(name = "idx_machineannotation_title", columnList = "title"),
-        @Index(name = "idx_machineannotation", columnList = "fixation_id")
+        @Index(name = "idx_preannotation", columnList = "title, reading_session_id"),
+        @Index(name = "idx_readingsession", columnList = "reading_session_id")
 })
 @NoArgsConstructor
 @AllArgsConstructor

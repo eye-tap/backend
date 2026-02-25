@@ -18,8 +18,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
-import java.sql.Timestamp;
-import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -43,65 +41,87 @@ public class SurveyService {
     public SurveyCreatedDto create(User admin, CreateSurveyDto createSurveyDto) {
         log.info("Creating survey");
         long startTime = System.nanoTime();
+
+        long t1 = System.nanoTime();
         Map<String, String> surveyUsers = new HashMap<>();
         Set<User> userSet = new HashSet<>();
+        List<String> pseudonyms = new ArrayList<>();
         for (int i = 0; i < createSurveyDto.users().intValue(); i++) {
             String pseudonym;
             do {
                 pseudonym = this.pseudonymeGeneratorService.generatePseudonym();
             } while (this.userRepository.existsByUsername(pseudonym));
-            AuthService.SurveyParticipant participant = this.authService.createSurveyParticipant(pseudonym);
-            surveyUsers.put(pseudonym, participant.password());
+            pseudonyms.add(pseudonym);
+        }
+        List<AuthService.SurveyParticipant> surveyParticipantsBatch = this.authService.createSurveyParticipantsBatch(pseudonyms);
+        for (AuthService.SurveyParticipant participant : surveyParticipantsBatch) {
+            surveyUsers.put(participant.user().getUsername(), participant.password());
             userSet.add(participant.user());
         }
-        log.info("Created survey users");
+
+        long t2 = System.nanoTime();
+        log.info("Created {} survey users in {} ms", userSet.size(), (t2 - t1) / 1_000_000);
+
+        long t3 = System.nanoTime();
         Survey survey = new Survey();
         survey.setUsers(userSet);
         survey.setTitle(createSurveyDto.title());
         survey.setDescription(createSurveyDto.description());
         survey.setAdmin(Set.of(admin));
         survey = this.surveyRepository.save(survey);
+        long t4 = System.nanoTime();
+        log.info("Survey metadata saved in {} ms", (t4 - t3) / 1_000_000);
 
-        log.info("Creating annotation sessions");
-        Set<AnnotationSession> annotationSessions = new HashSet<>();
+        long t5 = System.nanoTime();
+        Set<AnnotationSession> toSaveAnnotationSessions = new HashSet<>();
+        Set<MachineAnnotation> toSavePreAnnotations = new HashSet<>();
+
         for (Long readingSessionId : createSurveyDto.readingSessionIds()) {
-            ReadingSession readingSession = this.readingSessionRepository.findWithFixations(readingSessionId);
-            readingSession.getText().getCharacterBoundingBoxes().size(); // just for loading the object
+            long tRSStart = System.nanoTime();
+            ReadingSession readingSession = this.readingSessionRepository.findById(readingSessionId)
+                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Could not find reading session with id " + readingSessionId));
+
+            // Pre-annotations
             for (String annotationTitle : this.machineAnnotationRepository.findAllMachineAnnotationTitle(readingSessionId)) {
                 Set<MachineAnnotation> preAnnotations = this.machineAnnotationRepository.findByTitleAndReadingSession(annotationTitle, readingSessionId);
                 for (User user : userSet) {
-                    AnnotationSession annotationSession = this.annotationSessionService.create(survey, user, readingSession);
-                    annotationSessions.add(annotationSession);
+                    AnnotationSession annotationSession = this.annotationSessionService.initialize(survey, user, readingSession);
+                    toSaveAnnotationSessions.add(annotationSession);
                     annotationSession.setMachineAnnotations(preAnnotations);
                     annotationSession.setDescription(readingSession.getText().getTitle() + ", " + readingSession.getReader().getId() + ", " + annotationTitle);
                     for (MachineAnnotation preAnnotation : preAnnotations) {
                         preAnnotation.getAnnotationSessions().add(annotationSession);
                     }
                 }
-                this.machineAnnotationRepository.saveAll(preAnnotations);
+                toSavePreAnnotations.addAll(preAnnotations);
             }
 
+            // No pre-annotations
             for (User user : userSet) {
-                AnnotationSession annotationSession = this.annotationSessionService.create(survey, user, readingSession);
-                annotationSessions.add(annotationSession);
+                AnnotationSession annotationSession = this.annotationSessionService.initialize(survey, user, readingSession);
+                toSaveAnnotationSessions.add(annotationSession);
                 annotationSession.setDescription(readingSession.getText().getTitle() + ", " + readingSession.getReader().getId() + ", NO PRE-ANNOTATION");
-
             }
+            long tRSEnd = System.nanoTime();
+            log.info("Processed reading session {} in {} ms", readingSessionId, (tRSEnd - tRSStart) / 1_000_000);
         }
+        long t6 = System.nanoTime();
+        log.info("All annotation sessions initialized in {} ms", (t6 - t5) / 1_000_000);
 
-        survey.setAnnotationSessions(annotationSessions);
-        this.annotationSessionRepository.saveAll(annotationSessions);
+        long t7 = System.nanoTime();
+        survey.setAnnotationSessions(toSaveAnnotationSessions);
+        this.machineAnnotationRepository.saveAll(toSavePreAnnotations);
+        this.annotationSessionRepository.saveAll(toSaveAnnotationSessions);
         Long id = this.surveyRepository.save(survey).getId();
-        long intermediate = System.nanoTime();
-        log.info("Survey created! ");
+        long t8 = System.nanoTime();
+        log.info("Annotation sessions and survey saved in {} ms", (t8 - t7) / 1_000_000);
+
+        long t9 = System.nanoTime();
         SurveyCreatedDto surveyCreatedDto = mapFromSurvey(id, surveyUsers);
-        long endTime = System.nanoTime();
+        long t10 = System.nanoTime();
+        log.info("SurveyCreatedDto mapping took {} ms", (t10 - t9) / 1_000_000);
 
-        log.info("Survey created in {} ms, of which {} ms were spend on db operation and {} ms on json object creation",
-                (endTime - startTime) / 1000000,
-                (intermediate - startTime) / 1000000,
-                (endTime - intermediate) / 1000000);
-
+        log.info("Total survey creation took {} ms", (t10 - startTime) / 1_000_000);
 
         return surveyCreatedDto;
     }

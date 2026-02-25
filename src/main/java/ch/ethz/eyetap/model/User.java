@@ -24,7 +24,9 @@ For creation of surveys register an SURVEY_ADMIN user
 @Getter
 @Setter
 @Entity
-@Table(name = "app_user")
+@Table(name = "app_user", indexes = {
+        @Index(name = "idx_user_username", columnList = "username")
+})
 public class User implements UserDetails {
 
     @Id
@@ -42,7 +44,7 @@ public class User implements UserDetails {
 
     private String role;
 
-    @OneToOne(mappedBy = "user", orphanRemoval = true)
+    @OneToOne(mappedBy = "user", cascade = CascadeType.PERSIST, orphanRemoval = true)
     private Annotator annotator;
 
     @ManyToMany(mappedBy = "users")
