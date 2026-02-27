@@ -156,12 +156,19 @@ public class AnnotationSessionService {
 
         }
 
+        Set<Long> removedFixations = new HashSet<>();
+
+        for (Fixation fixation : annotationSession.getFixationsMarkedInvalid()) {
+            removedFixations.add(fixation.getId());
+        }
+
         return new AnnotationSessionDto(annotationSession.getId(),
                 annotationSession.getAnnotator().getId(),
                 annotations,
                 metaDataDto,
                 this.readingSessionService.createReadingSessionDto(annotationSession.getReadingSession()),
                 machineAnnotationDtos,
-                annotationSession.getLastEdited());
+                annotationSession.getLastEdited(),
+                removedFixations);
     }
 }
