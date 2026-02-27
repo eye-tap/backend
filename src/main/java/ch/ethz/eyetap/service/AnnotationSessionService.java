@@ -7,15 +7,14 @@ import ch.ethz.eyetap.model.User;
 import ch.ethz.eyetap.model.annotation.*;
 import ch.ethz.eyetap.model.survey.Survey;
 import ch.ethz.eyetap.repository.AnnotationSessionRepository;
-import ch.ethz.eyetap.repository.UserRepository;
+import ch.ethz.eyetap.repository.MachineAnnotationRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
 
 @Slf4j
 @Transactional
@@ -24,9 +23,9 @@ import java.util.Set;
 public class AnnotationSessionService {
 
     private final ReadingSessionService readingSessionService;
-    private final AnnotationSessionRepository sessionRepository;
     private final AnnotationSessionRepository annotationSessionRepository;
     private final EntityMapper entityMapper;
+    private final MachineAnnotationRepository machineAnnotationRepository;
 
     public Set<Long> annotationSessionIdsByUserId(Annotator annotator) {
         return this.annotationSessionRepository.findAllIdsByAnnotator(annotator);
@@ -38,8 +37,8 @@ public class AnnotationSessionService {
         long done = 0;
         for (Long sessionId : sessions) {
             if (
-                    this.sessionRepository.countSetAnnotationsByAnnotationSessionId(sessionId)
-                            == this.sessionRepository.countTotalFixationsByAnnotationSessionId(sessionId)
+                    this.annotationSessionRepository.countSetAnnotationsByAnnotationSessionId(sessionId)
+                            == this.annotationSessionRepository.countTotalFixationsByAnnotationSessionId(sessionId)
             ) {
                 done++;
             }
@@ -48,8 +47,8 @@ public class AnnotationSessionService {
     }
 
     public AnnotationsMetaDataDto calculateAnnotationsMetaData(Long annotationSessionId) {
-        int total = Math.toIntExact(this.sessionRepository.countTotalFixationsByAnnotationSessionId(annotationSessionId));
-        int set = Math.toIntExact(this.sessionRepository.countSetAnnotationsByAnnotationSessionId(annotationSessionId));
+        int total = Math.toIntExact(this.annotationSessionRepository.countTotalFixationsByAnnotationSessionId(annotationSessionId));
+        int set = Math.toIntExact(this.annotationSessionRepository.countSetAnnotationsByAnnotationSessionId(annotationSessionId));
 
         return new AnnotationsMetaDataDto(total, set);
     }
@@ -59,7 +58,7 @@ public class AnnotationSessionService {
                 this.annotationSessionRepository.annotatorByAnnotationSessionId(annotationSessionId),
                 this.calculateAnnotationsMetaData(annotationSessionId),
                 this.readingSessionService.shallowReadingSessionDto(
-                        this.sessionRepository.readingSessionByAnnotationSessionId(annotationSessionId)),
+                        this.annotationSessionRepository.readingSessionByAnnotationSessionId(annotationSessionId)),
                 this.annotationSessionRepository.lastEditedByAnnotationSessionId(annotationSessionId),
                 this.annotationSessionRepository.descriptionByAnnotationSessionId(annotationSessionId)
         );
@@ -104,6 +103,8 @@ public class AnnotationSessionService {
             annotations.add(annotationDto);
         }
 
+        String activeMachineAnnotation = null;
+
         for (MachineAnnotation machineAnnotation : annotationSession.getMachineAnnotations()) {
             AnnotationDto annotationDto = new AnnotationDto(machineAnnotation.getId(),
                     AnnotationType.MACHINE_ANNOTATED,
@@ -115,6 +116,44 @@ public class AnnotationSessionService {
                     machineAnnotation.getDGeomWeight(),
                     machineAnnotation.getPShareWeight());
             annotations.add(annotationDto);
+
+            if (activeMachineAnnotation == null) {
+                activeMachineAnnotation = machineAnnotation.getTitle();
+            }
+        }
+
+        List<MachineAnnotation> allMachineAnnotations = this.machineAnnotationRepository.findAllByReadingSessionIds(Collections.singletonList(annotationSession.getReadingSession().getId()));
+
+        Map<String, Set<MachineAnnotation>> machineAnnotationsById = new HashMap<>();
+        for (MachineAnnotation allMachineAnnotation : allMachineAnnotations) {
+            if (activeMachineAnnotation != null && activeMachineAnnotation.equals(allMachineAnnotation.getTitle())) {
+                continue;
+            }
+            if (!machineAnnotationsById.containsKey(allMachineAnnotation.getTitle())) {
+                machineAnnotationsById.put(allMachineAnnotation.getTitle(), new HashSet<>());
+            }
+            machineAnnotationsById.get(allMachineAnnotation.getTitle()).add(allMachineAnnotation);
+        }
+
+        Map<String, Set<AnnotationDto>> machineAnnotationDtos = new HashMap<>();
+        for (Map.Entry<String, Set<MachineAnnotation>> stringSetEntry : machineAnnotationsById.entrySet()) {
+            String title = stringSetEntry.getKey();
+            Set<AnnotationDto> value = new HashSet<>();
+            for (MachineAnnotation machineAnnotation : stringSetEntry.getValue()) {
+                AnnotationDto annotationDto = new AnnotationDto(machineAnnotation.getId(),
+                        AnnotationType.MACHINE_ANNOTATED,
+                        new FixationDto(machineAnnotation.getFixation().getId(),
+                                machineAnnotation.getFixation().getX(),
+                                machineAnnotation.getFixation().getY(),
+                                machineAnnotation.getFixation().getDisagreement()),
+                        this.entityMapper.toBoundingBoxDto(machineAnnotation.getCharacterBoundingBox()),
+                        machineAnnotation.getDGeomWeight(),
+                        machineAnnotation.getPShareWeight());
+                value.add(annotationDto);
+            }
+
+            machineAnnotationDtos.put(title, value);
+
         }
 
         return new AnnotationSessionDto(annotationSession.getId(),
@@ -122,6 +161,7 @@ public class AnnotationSessionService {
                 annotations,
                 metaDataDto,
                 this.readingSessionService.createReadingSessionDto(annotationSession.getReadingSession()),
+                machineAnnotationDtos,
                 annotationSession.getLastEdited());
     }
 }

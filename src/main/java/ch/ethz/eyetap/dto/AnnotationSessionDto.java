@@ -5,6 +5,7 @@ import lombok.Value;
 
 import java.io.Serializable;
 import java.time.LocalDateTime;
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -13,5 +14,6 @@ import java.util.Set;
 public record AnnotationSessionDto(Long id, Long annotator, Set<AnnotationDto> annotations,
                                    AnnotationsMetaDataDto annotationsMetaData,
                                    ReadingSessionDto readingSession,
+                                   Map<String, Set<AnnotationDto>> inactiveMachineAnnotations,
                                    LocalDateTime lastEdited) {
 }

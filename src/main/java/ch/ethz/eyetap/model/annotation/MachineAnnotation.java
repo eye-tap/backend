@@ -39,7 +39,7 @@ public class MachineAnnotation {
     @JoinColumn(name = "word_bounding_box_id")
     private WordBoundingBox wordBoundingBox;
 
-    @ManyToOne(cascade = CascadeType.ALL)
+    @ManyToOne
     @JoinColumn(name = "reading_session_id")
     private ReadingSession readingSession;
 

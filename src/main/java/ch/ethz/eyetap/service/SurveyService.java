@@ -8,6 +8,8 @@ import ch.ethz.eyetap.model.annotation.ReadingSession;
 import ch.ethz.eyetap.model.annotation.Text;
 import ch.ethz.eyetap.model.survey.Survey;
 import ch.ethz.eyetap.repository.*;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
@@ -35,6 +37,9 @@ public class SurveyService {
     private final MachineAnnotationRepository machineAnnotationRepository;
     private final AnnotationSessionRepository annotationSessionRepository;
     private final FixationRepository fixationRepository;
+
+    @PersistenceContext
+    private EntityManager entityManager;
 
     @Transactional
     @CacheEvict(value = "surveys_all", allEntries = true)
@@ -73,25 +78,48 @@ public class SurveyService {
         log.info("Survey metadata saved in {} ms", (t4 - t3) / 1_000_000);
 
         long t5 = System.nanoTime();
+        // Fetch all reading sessions upfront to avoid lazy loading
+        Map<Long, ReadingSession> readingSessionMap = new HashMap<>();
+        for (Long readingSessionId : createSurveyDto.readingSessionIds()) {
+            ReadingSession readingSession = this.readingSessionRepository.findById(readingSessionId)
+                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Could not find reading session with id " + readingSessionId));
+            readingSessionMap.put(readingSessionId, readingSession);
+        }
+
+        // Fetch ALL machine annotations for ALL reading sessions in ONE query
+        List<Long> readingSessionIds = new ArrayList<>(createSurveyDto.readingSessionIds());
+        Map<Long, Map<String, Set<MachineAnnotation>>> preAnnotationsByReadingSessionAndTitle = new HashMap<>();
+        if (!readingSessionIds.isEmpty()) {
+            List<MachineAnnotation> allMachineAnnotations = this.machineAnnotationRepository.findAllByReadingSessionIds(readingSessionIds);
+            // Group machine annotations by reading session ID and title
+            for (MachineAnnotation ma : allMachineAnnotations) {
+                preAnnotationsByReadingSessionAndTitle
+                        .computeIfAbsent(ma.getReadingSession().getId(), k -> new HashMap<>())
+                        .computeIfAbsent(ma.getTitle(), k -> new HashSet<>())
+                        .add(ma);
+            }
+        }
+
         Set<AnnotationSession> toSaveAnnotationSessions = new HashSet<>();
         Set<MachineAnnotation> toSavePreAnnotations = new HashSet<>();
 
         for (Long readingSessionId : createSurveyDto.readingSessionIds()) {
             long tRSStart = System.nanoTime();
-            ReadingSession readingSession = this.readingSessionRepository.findById(readingSessionId)
-                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Could not find reading session with id " + readingSessionId));
+            ReadingSession readingSession = readingSessionMap.get(readingSessionId);
+            String textTitle = readingSession.getText().getTitle();
+            Long readerId = readingSession.getReader().getId();
+
+            Map<String, Set<MachineAnnotation>> annotationsByTitle = preAnnotationsByReadingSessionAndTitle.getOrDefault(readingSessionId, new HashMap<>());
 
             // Pre-annotations
-            for (String annotationTitle : this.machineAnnotationRepository.findAllMachineAnnotationTitle(readingSessionId)) {
-                Set<MachineAnnotation> preAnnotations = this.machineAnnotationRepository.findByTitleAndReadingSession(annotationTitle, readingSessionId);
+            for (Map.Entry<String, Set<MachineAnnotation>> entry : annotationsByTitle.entrySet()) {
+                String annotationTitle = entry.getKey();
+                Set<MachineAnnotation> preAnnotations = entry.getValue();
                 for (User user : userSet) {
                     AnnotationSession annotationSession = this.annotationSessionService.initialize(survey, user, readingSession);
                     toSaveAnnotationSessions.add(annotationSession);
                     annotationSession.setMachineAnnotations(preAnnotations);
-                    annotationSession.setDescription(readingSession.getText().getTitle() + ", " + readingSession.getReader().getId() + ", " + annotationTitle);
-                    for (MachineAnnotation preAnnotation : preAnnotations) {
-                        preAnnotation.getAnnotationSessions().add(annotationSession);
-                    }
+                    annotationSession.setDescription(textTitle + ", " + readerId + ", " + annotationTitle);
                 }
                 toSavePreAnnotations.addAll(preAnnotations);
             }
@@ -100,7 +128,7 @@ public class SurveyService {
             for (User user : userSet) {
                 AnnotationSession annotationSession = this.annotationSessionService.initialize(survey, user, readingSession);
                 toSaveAnnotationSessions.add(annotationSession);
-                annotationSession.setDescription(readingSession.getText().getTitle() + ", " + readingSession.getReader().getId() + ", NO PRE-ANNOTATION");
+                annotationSession.setDescription(textTitle + ", " + readerId + ", NO PRE-ANNOTATION");
             }
             long tRSEnd = System.nanoTime();
             log.info("Processed reading session {} in {} ms", readingSessionId, (tRSEnd - tRSStart) / 1_000_000);
@@ -112,12 +140,22 @@ public class SurveyService {
         survey.setAnnotationSessions(toSaveAnnotationSessions);
         this.machineAnnotationRepository.saveAll(toSavePreAnnotations);
         this.annotationSessionRepository.saveAll(toSaveAnnotationSessions);
+        entityManager.flush();
+        entityManager.clear();
         Long id = this.surveyRepository.save(survey).getId();
         long t8 = System.nanoTime();
         log.info("Annotation sessions and survey saved in {} ms", (t8 - t7) / 1_000_000);
 
         long t9 = System.nanoTime();
-        SurveyCreatedDto surveyCreatedDto = mapFromSurvey(id, surveyUsers);
+        // Build SurveyCreatedDto directly from created data without re-querying
+        SurveyDto surveyDto = new SurveyDto(
+                id,
+                userSet.stream().map(User::getId).collect(Collectors.toCollection(LinkedHashSet::new)),
+                survey.getTitle(),
+                survey.getDescription(),
+                Collections.emptySet()  // Annotation sessions will be fetched on-demand via the API
+        );
+        SurveyCreatedDto surveyCreatedDto = new SurveyCreatedDto(surveyDto, surveyUsers);
         long t10 = System.nanoTime();
         log.info("SurveyCreatedDto mapping took {} ms", (t10 - t9) / 1_000_000);
 
@@ -126,13 +164,6 @@ public class SurveyService {
         return surveyCreatedDto;
     }
 
-    private SurveyCreatedDto mapFromSurvey(Long id, Map<String, String> surveyUsers) {
-        SurveyDto surveyDto = mapToSurveyDto(id);
-        return new SurveyCreatedDto(
-                surveyDto
-                , surveyUsers
-        );
-    }
 
     @SneakyThrows
     public SurveyDto mapToSurveyDto(Long surveyId) {
@@ -221,6 +252,7 @@ public class SurveyService {
     }
 
     @Cacheable("surveys_all")
+    @Transactional
     public Set<SurveyDto> getAll(Long userId) {
         return this.surveyRepository.findAll()
                 .stream()
