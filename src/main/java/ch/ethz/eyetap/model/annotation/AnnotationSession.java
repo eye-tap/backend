@@ -61,6 +61,12 @@ public class AnnotationSession {
     @Column(name = "initialized")
     private Boolean initialized;
 
+    @ManyToMany
+    @JoinTable(name = "annotation_session_fixations",
+            joinColumns = @JoinColumn(name = "annotationSession_id"),
+            inverseJoinColumns = @JoinColumn(name = "fixations_id"))
+    private Set<Fixation> fixationsMarkedInvalid = new LinkedHashSet<>();
+
     @Override
     public String toString() {
         return new ToStringBuilder(this)

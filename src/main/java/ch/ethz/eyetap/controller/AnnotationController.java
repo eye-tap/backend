@@ -11,6 +11,8 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Objects;
 
 @RestController
@@ -29,7 +31,10 @@ public class AnnotationController {
                 .filter(annotationSession -> Objects.equals(annotationSession, sessionId))
                 .findFirst()
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.FORBIDDEN, "You dont have access to this session or it does not exist"));
-        return this.annotationService.annotate(sessionId, annotations.annotations());
+        return this.annotationService.annotate(sessionId, annotations.annotations() == null ? new HashMap<>() : annotations.annotations(),
+                annotations.annotationsToRemove() == null ? new HashMap<>() : annotations.annotationsToRemove(),
+                annotations.fixationsToRemove() == null ? new HashSet<>() : annotations.fixationsToRemove(),
+                annotations.fixationsToUndoRemove() == null ? new HashSet<>() : annotations.fixationsToUndoRemove());
 
     }
 
