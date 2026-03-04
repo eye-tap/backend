@@ -42,7 +42,8 @@ public class ImportController {
                 saved.getReader().getId(),
                 saved.getText().getId(),
                 saved.getText().getTitle(),
-                saved.getUploadedAt());
+                saved.getUploadedAt(),
+                saved.getReader().getForeignId());
     }
 
     @PreAuthorize("hasRole('SURVEY_ADMIN')")
@@ -55,7 +56,8 @@ public class ImportController {
                     saved.getReader().getId(),
                     saved.getText().getId(),
                     saved.getText().getTitle(),
-                    saved.getUploadedAt());
+                    saved.getUploadedAt(),
+                    saved.getReader().getForeignId());
             readingSessionDtos.add(shallowReadingSessionDto);
         }
         log.info("Import of reading {} sessions complete", readingSessionDtos.size());

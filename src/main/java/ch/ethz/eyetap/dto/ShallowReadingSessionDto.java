@@ -14,5 +14,6 @@ public record ShallowReadingSessionDto(
         Long reader,
         Long textId,
         String textTitle,
-        LocalDateTime uploadedAt) {
+        LocalDateTime uploadedAt,
+        Long foreignReaderId) {
 }

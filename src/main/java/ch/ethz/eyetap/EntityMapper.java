@@ -28,6 +28,7 @@ public interface EntityMapper {
     WordBoundingBoxDto toBoundingBoxDto(WordBoundingBox characterBoundingBox);
 
 
+    @Mapping(target = "foreignReaderId", source = "reader.foreignId")
     @Mapping(target = "textTitle", source = "text.title")
     @Mapping(target = "textId", source = "text.id")
     ShallowReadingSessionDto toShallowReadingSessionDto(ReadingSession readingSession);

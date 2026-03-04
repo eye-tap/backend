@@ -116,13 +116,12 @@ public class SurveyService {
 
             // Pre-annotations
             for (Map.Entry<String, Set<MachineAnnotation>> entry : annotationsByTitle.entrySet()) {
-                String annotationTitle = entry.getKey();
                 Set<MachineAnnotation> preAnnotations = entry.getValue();
                 for (User user : userSet) {
                     AnnotationSession annotationSession = this.annotationSessionService.initialize(survey, user, readingSession);
                     toSaveAnnotationSessions.add(annotationSession);
                     annotationSession.setMachineAnnotations(preAnnotations);
-                    annotationSession.setDescription(textTitle + ", " + readerId);
+                    annotationSession.setDescription(textTitle + ", " + readingSession.getReader().getForeignId());
                 }
                 toSavePreAnnotations.addAll(preAnnotations);
             }
@@ -221,7 +220,8 @@ public class SurveyService {
                     readingSessionReaderId,
                     textId,
                     textTitle,
-                    rs.getUploadedAt()
+                    rs.getUploadedAt(),
+                    rs.getReader().getForeignId()
             );
 
             AnnotationsMetaDataDto metaData = new AnnotationsMetaDataDto(

@@ -103,7 +103,7 @@ public class ReadingSessionService {
                     }
 
                     CharacterBoundingBox cbb = charBoxMap.get(preAnnotationValueDto.foreignCharacterBoxId());
-                    if (cbb == null){
+                    if (cbb == null) {
                         throw new ResponseStatusException(
                                 HttpStatus.NOT_FOUND,
                                 "No character bounding box with id " + preAnnotationValueDto.foreignCharacterBoxId() + " found"
@@ -141,11 +141,14 @@ public class ReadingSessionService {
     }
 
     public ShallowReadingSessionDto shallowReadingSessionDto(Long id) {
+        ReadingSession readingSession = this.readingSessionRepository.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "No reading session with id " + id));
         return new ShallowReadingSessionDto(id,
-                this.readingSessionRepository.findReaderIdByReadingSession(id),
-                this.readingSessionRepository.findTextIdByReadingSession(id),
-                this.readingSessionRepository.findTextTitleByReadingSession(id),
-                this.readingSessionRepository.lastEditedByAnnotationSessionId(id)
+                readingSession.getReader().getId(),
+                readingSession.getText().getId(),
+                readingSession.getText().getTitle(),
+                readingSession.getUploadedAt(),
+                readingSession.getReader().getForeignId()
         );
     }
 
