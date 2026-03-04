@@ -90,7 +90,10 @@ public class SurveyService {
         List<Long> readingSessionIds = new ArrayList<>(createSurveyDto.readingSessionIds());
         Map<Long, Map<String, Set<MachineAnnotation>>> preAnnotationsByReadingSessionAndTitle = new HashMap<>();
         if (!readingSessionIds.isEmpty()) {
-            List<MachineAnnotation> allMachineAnnotations = this.machineAnnotationRepository.findAllByReadingSessionIds(readingSessionIds);
+            // TODO: Make selected algorithms configurable
+            // List<MachineAnnotation> allMachineAnnotations = this.machineAnnotationRepository.findAllByReadingSessionIds(readingSessionIds);
+            List<MachineAnnotation> allMachineAnnotations = this.machineAnnotationRepository.findAllByReadingSessionIdsAndTitle(readingSessionIds, "Algorithm_popeye_slice");
+
             // Group machine annotations by reading session ID and title
             for (MachineAnnotation ma : allMachineAnnotations) {
                 preAnnotationsByReadingSessionAndTitle
@@ -125,11 +128,11 @@ public class SurveyService {
             }
 
             // No pre-annotations
-            for (User user : userSet) {
+/*            for (User user : userSet) {
                 AnnotationSession annotationSession = this.annotationSessionService.initialize(survey, user, readingSession);
                 toSaveAnnotationSessions.add(annotationSession);
                 annotationSession.setDescription(textTitle + ", " + readerId + ", NO PRE-ANNOTATION");
-            }
+            }*/
             long tRSEnd = System.nanoTime();
             log.info("Processed reading session {} in {} ms", readingSessionId, (tRSEnd - tRSStart) / 1_000_000);
         }

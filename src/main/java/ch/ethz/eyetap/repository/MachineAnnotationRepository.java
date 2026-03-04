@@ -36,4 +36,14 @@ public interface MachineAnnotationRepository extends JpaRepository<MachineAnnota
             """)
     List<MachineAnnotation> findAllByReadingSessionIds(@Param("readingSessionIds") List<Long> readingSessionIds);
 
+    @Query("""
+        SELECT m
+        FROM MachineAnnotation m
+        WHERE m.readingSession.id IN :readingSessionIds
+        AND m.title = :title
+       """)
+    List<MachineAnnotation> findAllByReadingSessionIdsAndTitle(
+            @Param("readingSessionIds") List<Long> readingSessionIds,
+            @Param("title") String title
+    );
 }
