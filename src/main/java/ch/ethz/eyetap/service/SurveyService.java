@@ -122,7 +122,7 @@ public class SurveyService {
                     AnnotationSession annotationSession = this.annotationSessionService.initialize(survey, user, readingSession);
                     toSaveAnnotationSessions.add(annotationSession);
                     annotationSession.setMachineAnnotations(preAnnotations);
-                    annotationSession.setDescription(textTitle + ", " + readerId + ", " + annotationTitle);
+                    annotationSession.setDescription(textTitle + ", " + readerId);
                 }
                 toSavePreAnnotations.addAll(preAnnotations);
             }
