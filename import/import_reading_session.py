@@ -26,6 +26,7 @@ credentials = {
     "accountType": "SURVEY_ADMIN"
 }
 
+
 # =========================
 # LOGIN / REGISTER
 # =========================
@@ -52,7 +53,9 @@ def get_jwt_token():
     print(f"JWT: {token}")
     return token
 
+
 TOKEN = get_jwt_token()
+
 
 # =========================
 # HELPERS
@@ -69,6 +72,7 @@ def post_json(url, payload):
         response.raise_for_status()
     return response.json()
 
+
 def build_import_reading_session_dto(fix_df, annot_df, text_id, lang):
     if fix_df.empty:
         return None
@@ -83,7 +87,7 @@ def build_import_reading_session_dto(fix_df, annot_df, text_id, lang):
             "foreignId": fix_id,
             "x": float(row["x"]),
             "y": float(row["y"]),
-            "disagreement": float(row["H_vote"]) if not pd.isna(row["H_vote"]) else 0.0
+            "disagreement": float(row["annotation_entropy"]) if not pd.isna(row["annotation_entropy"]) else 0.0
         })
         valid_fix_ids.add(fix_id)
 
@@ -91,7 +95,7 @@ def build_import_reading_session_dto(fix_df, annot_df, text_id, lang):
     annot_df_filtered = annot_df[
         annot_df["fix_uid"].isin(valid_fix_ids) &
         annot_df["char_uid"].notna()
-    ]
+        ]
     grouped = annot_df_filtered.groupby("algorithm_id")
     for algorithm_id, group in grouped:
         values = []
@@ -99,8 +103,8 @@ def build_import_reading_session_dto(fix_df, annot_df, text_id, lang):
             values.append({
                 "foreignFixationId": int(row["fix_uid"]),
                 "foreignCharacterBoxId": int(row["char_uid"]),
-                "dGeom": float(row["D_geom"]),
-                "pShare": float(row["P_share"])
+                "dGeom": 0,
+                "pShare": 0
             })
         pre_annotations.append({
             "title": f"Algorithm_{algorithm_id}",
@@ -114,6 +118,7 @@ def build_import_reading_session_dto(fix_df, annot_df, text_id, lang):
         "fixations": fixations,
         "preAnnotations": pre_annotations
     }
+
 
 # =========================
 # MAIN EXECUTION
@@ -151,6 +156,7 @@ def main(languages_to_import=None):
 
 if __name__ == "__main__":
     import argparse
+
     parser = argparse.ArgumentParser(description="Import reading sessions with optional language filter")
     parser.add_argument(
         "--languages",
