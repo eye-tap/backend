@@ -73,6 +73,7 @@ public class SurveyService {
         survey.setTitle(createSurveyDto.title());
         survey.setDescription(createSurveyDto.description());
         survey.setAdmin(Set.of(admin));
+        survey.setFurtherOptions(createSurveyDto.furtherOptions());
         survey = this.surveyRepository.save(survey);
         long t4 = System.nanoTime();
         log.info("Survey metadata saved in {} ms", (t4 - t3) / 1_000_000);
@@ -274,7 +275,7 @@ public class SurveyService {
     }
 
     @Transactional
-    public boolean hasAccessToSurvey(Long userId, Survey survey){
+    public boolean hasAccessToSurvey(Long userId, Survey survey) {
         boolean access = survey.getAdmin()
                 .stream()
                 .map(User::getId)

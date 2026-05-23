@@ -6,7 +6,7 @@ public record CreateSurveyDto(
         Long users,
         String title,
         String description,
-        Set<Long> readingSessionIds
-        // todo: add option for preset of annotations
+        Set<Long> readingSessionIds,
+        String furtherOptions
 ) {
 }

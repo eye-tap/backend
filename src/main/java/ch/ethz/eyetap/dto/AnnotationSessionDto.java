@@ -16,5 +16,6 @@ public record AnnotationSessionDto(Long id, Long annotator, Set<AnnotationDto> a
                                    ReadingSessionDto readingSession,
                                    Map<String, Set<AnnotationDto>> inactiveMachineAnnotations,
                                    LocalDateTime lastEdited,
-                                   Set<Long> removedFixations) {
+                                   Set<Long> removedFixations,
+                                   String furtherOptions) {
 }

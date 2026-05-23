@@ -40,4 +40,7 @@ public class Survey {
             inverseJoinColumns = @JoinColumn(name = "admin_id"))
     private Set<User> admin = new LinkedHashSet<>();
 
+    @Column(name = "furhter_options")
+    private String furtherOptions;
+
 }

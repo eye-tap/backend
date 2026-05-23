@@ -169,6 +169,8 @@ public class AnnotationSessionService {
                 this.readingSessionService.createReadingSessionDto(annotationSession.getReadingSession()),
                 machineAnnotationDtos,
                 annotationSession.getLastEdited(),
-                removedFixations);
+                removedFixations,
+                Optional.ofNullable(annotationSession.getSurvey()).map(Survey::getFurtherOptions)
+                        .orElse(""));
     }
 }
