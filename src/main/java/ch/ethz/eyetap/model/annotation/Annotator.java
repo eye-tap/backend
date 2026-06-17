@@ -29,4 +29,8 @@ public class Annotator {
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
+    @Column(name = "further_options")
+    private String furtherOptions;
+
+
 }

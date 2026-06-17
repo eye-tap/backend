@@ -4,19 +4,17 @@ import ch.ethz.eyetap.dto.UserSurveyProgressDto;
 import ch.ethz.eyetap.model.User;
 import ch.ethz.eyetap.model.annotation.Annotator;
 import ch.ethz.eyetap.model.survey.Survey;
+import ch.ethz.eyetap.repository.AnnotatorRepository;
 import ch.ethz.eyetap.repository.SurveyRepository;
 import ch.ethz.eyetap.service.AnnotationSessionService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 
@@ -29,6 +27,7 @@ public class UserController {
 
     private final SurveyRepository surveyRepository;
     private final AnnotationSessionService annotationSessionService;
+    private final AnnotatorRepository annotatorRepository;
 
     @GetMapping("/survey/{id}/")
     public List<UserSurveyProgressDto> getUserSurveyProgress(@PathVariable Long id) {
@@ -42,6 +41,19 @@ public class UserController {
         }
         progressDtos.sort(Comparator.comparingLong(UserSurveyProgressDto::userId));
         return progressDtos;
+    }
+
+    @GetMapping("/options")
+    public String getUserOptions(@AuthenticationPrincipal User user) {
+        return user.getAnnotator().getFurtherOptions();
+    }
+
+    @PostMapping("/options")
+    public String setUserOptions(@AuthenticationPrincipal User user,
+                                 @RequestBody String options) {
+        Annotator annotator = user.getAnnotator();
+        annotator.setFurtherOptions(options);
+        return annotatorRepository.save(annotator).getFurtherOptions();
     }
 
 }
