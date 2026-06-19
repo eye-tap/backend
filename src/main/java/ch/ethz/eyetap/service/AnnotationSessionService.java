@@ -60,7 +60,8 @@ public class AnnotationSessionService {
                 this.readingSessionService.shallowReadingSessionDto(
                         this.annotationSessionRepository.readingSessionByAnnotationSessionId(annotationSessionId)),
                 this.annotationSessionRepository.lastEditedByAnnotationSessionId(annotationSessionId),
-                this.annotationSessionRepository.descriptionByAnnotationSessionId(annotationSessionId)
+                this.annotationSessionRepository.descriptionByAnnotationSessionId(annotationSessionId),
+                this.annotationSessionRepository.furtherOptionsByAnnotationSessionId(annotationSessionId)
         );
     }
 

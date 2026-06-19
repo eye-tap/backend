@@ -74,6 +74,15 @@ public interface AnnotationSessionRepository extends JpaRepository<AnnotationSes
     );
 
     @Query("""
+                SELECT a.survey.furtherOptions
+                FROM AnnotationSession a
+                WHERE a.id = :annotationSessionId
+            """)
+    String furtherOptionsByAnnotationSessionId(
+            @Param("annotationSessionId") Long annotationSessionId
+    );
+
+    @Query("""
                 SELECT a FROM AnnotationSession a
                 JOIN FETCH a.readingSession rs
                 JOIN FETCH a.annotator an

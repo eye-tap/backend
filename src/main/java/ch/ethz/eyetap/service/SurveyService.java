@@ -236,7 +236,8 @@ public class SurveyService {
                     metaData,
                     readingSessionDto,
                     a.getLastEdited(),
-                    a.getDescription()
+                    a.getDescription(),
+                    a.getSurvey().getFurtherOptions()
             );
 
             sessionDtos.add(sessionDto);

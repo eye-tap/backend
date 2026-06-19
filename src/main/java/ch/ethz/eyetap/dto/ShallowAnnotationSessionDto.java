@@ -15,5 +15,6 @@ public record ShallowAnnotationSessionDto(
         AnnotationsMetaDataDto annotationsMetaData,
         ShallowReadingSessionDto readingSession,
         LocalDateTime lastEdited,
-        String description) {
+        String description,
+        String furtherOptions) {
 }
