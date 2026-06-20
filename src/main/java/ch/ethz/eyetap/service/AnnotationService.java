@@ -73,44 +73,23 @@ public class AnnotationService {
         log.info("Saved {} user annotations in {} ms", changes.size(), (System.nanoTime() - t4) / 1_000_000);
         log.info("Total annotation processing time: {} ms", (t4 - t3) / 1_000_000);
 
-        // --- Step 3: Remove redundant machine annotations ---
-        long t5 = System.nanoTime();
-        Set<MachineAnnotation> redundantMachineAnnotations = new HashSet<>();
-        for (MachineAnnotation ma : session.getMachineAnnotations()) {
-            if (annotations.containsKey(ma.getFixation().getId())) {
-                redundantMachineAnnotations.add(ma);
-            }
-        }
-        session.getMachineAnnotations().removeAll(redundantMachineAnnotations);
-        for (MachineAnnotation ma : redundantMachineAnnotations) {
-            ma.getAnnotationSessions().removeIf(a -> a.getId().equals(sessionId));
-        }
-        long t6 = System.nanoTime();
-        log.info("Removed {} redundant machine annotations in {} ms", redundantMachineAnnotations.size(), (t6 - t5) / 1_000_000);
-
-        // --- Step 4: Remove specific annotations (user + machine) ---
+        // --- Step 3: Remove specific annotations (user + machine) ---
         long t7 = System.nanoTime();
-        Set<MachineAnnotation> machineAnnotationsToRemove = new HashSet<>();
         Set<UserAnnotation> userAnnotationsToRemove = new HashSet<>();
         for (Map.Entry<Long, Long> entry : annotationsToRemove.entrySet()) {
             Long fixationId = entry.getKey();
             Long characterId = entry.getValue();
-            session.getMachineAnnotations().stream()
-                    .filter(ma -> ma.getFixation().getId().equals(fixationId)
-                            && ma.getCharacterBoundingBox().getId().equals(characterId))
-                    .forEach(machineAnnotationsToRemove::add);
             session.getUserAnnotations().stream()
                     .filter(ua -> ua.getFixation().getId().equals(fixationId)
                             && ua.getCharacterBoundingBox().getId().equals(characterId))
                     .forEach(userAnnotationsToRemove::add);
         }
-        session.getMachineAnnotations().removeAll(machineAnnotationsToRemove);
         session.getUserAnnotations().removeAll(userAnnotationsToRemove);
         long t8 = System.nanoTime();
-        log.info("Removed {} machine and {} user annotations in {} ms", machineAnnotationsToRemove.size(),
+        log.info("Removed {} user annotations in {} ms",
                 userAnnotationsToRemove.size(), (t8 - t7) / 1_000_000);
 
-        // --- Step 5: Mark fixations invalid / undo ---
+        // --- Step 4: Mark fixations invalid / undo ---
         long t9 = System.nanoTime();
         for (Long fixationId : fixationsToRemove) {
             session.getFixationsMarkedInvalid().add(findOrThrow(fixationId, session.getReadingSession().getFixations()));
@@ -122,7 +101,7 @@ public class AnnotationService {
         log.info("Processed {} fixations to remove and {} to undo in {} ms", fixationsToRemove.size(),
                 fixationsToUndoRemove.size(), (t10 - t9) / 1_000_000);
 
-        // --- Step 6: Save session and calculate DTO ---
+        // --- Step 5: Save session and calculate DTO ---
         long t11 = System.nanoTime();
         session.setLastEdited(LocalDateTime.now());
         AnnotationSession saved = annotationSessionRepository.save(session);

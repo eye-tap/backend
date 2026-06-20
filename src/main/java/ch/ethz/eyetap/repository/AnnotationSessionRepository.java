@@ -32,11 +32,6 @@ public interface AnnotationSessionRepository extends JpaRepository<AnnotationSes
                 (SELECT COUNT(uan) 
                  FROM UserAnnotation uan 
                  WHERE uan.annotationSession.id = :annotationSessionId)
-                +
-                (SELECT COUNT(man) 
-                 FROM AnnotationSession a2 
-                 JOIN a2.machineAnnotations man 
-                 WHERE a2.id = :annotationSessionId)
             """)
     long countSetAnnotationsByAnnotationSessionId(@Param("annotationSessionId") Long annotationSessionId);
 
@@ -92,8 +87,7 @@ public interface AnnotationSessionRepository extends JpaRepository<AnnotationSes
 
     @Query("""
                 SELECT a.id, 
-                       (SELECT COUNT(ua) FROM UserAnnotation ua WHERE ua.annotationSession.id = a.id) +
-                       (SELECT COUNT(ma) FROM MachineAnnotation ma JOIN ma.annotationSessions mas WHERE mas.id = a.id)
+                       (SELECT COUNT(ua) FROM UserAnnotation ua WHERE ua.annotationSession.id = a.id)
                 FROM AnnotationSession a
                 WHERE a.id IN :annotationSessionIds
             """)

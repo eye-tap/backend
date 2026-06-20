@@ -14,7 +14,8 @@ import java.util.Set;
 public record AnnotationSessionDto(Long id, Long annotator, Set<AnnotationDto> annotations,
                                    AnnotationsMetaDataDto annotationsMetaData,
                                    ReadingSessionDto readingSession,
-                                   Map<String, Set<AnnotationDto>> inactiveMachineAnnotations,
+                                   Map<String, Set<AnnotationDto>> machineAnnotations,
+                                   Set<String> activeMachineAnnotations,
                                    LocalDateTime lastEdited,
                                    Set<Long> removedFixations,
                                    String furtherOptions) {

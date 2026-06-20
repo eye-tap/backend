@@ -7,7 +7,6 @@ import ch.ethz.eyetap.model.User;
 import ch.ethz.eyetap.model.annotation.*;
 import ch.ethz.eyetap.model.survey.Survey;
 import ch.ethz.eyetap.repository.AnnotationSessionRepository;
-import ch.ethz.eyetap.repository.MachineAnnotationRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -25,7 +24,6 @@ public class AnnotationSessionService {
     private final ReadingSessionService readingSessionService;
     private final AnnotationSessionRepository annotationSessionRepository;
     private final EntityMapper entityMapper;
-    private final MachineAnnotationRepository machineAnnotationRepository;
 
     public Set<Long> annotationSessionIdsByUserId(Annotator annotator) {
         return this.annotationSessionRepository.findAllIdsByAnnotator(annotator);
@@ -90,6 +88,42 @@ public class AnnotationSessionService {
     }
 
     private AnnotationSessionDto annotationSessionDto(final AnnotationSession annotationSession, AnnotationsMetaDataDto metaDataDto) {
+        Set<AnnotationDto> annotations = getUserAnnotations(annotationSession);
+        Map<String, Set<AnnotationDto>> machineAnnotations = new HashMap<>();
+        for (MachineAnnotation machineAnnotation : annotationSession.getReadingSession().getMachineAnnotations()) {
+            AnnotationDto annotationDto = new AnnotationDto(machineAnnotation.getId(),
+                    AnnotationType.MACHINE_ANNOTATED,
+                    new FixationDto(machineAnnotation.getFixation().getId(),
+                            machineAnnotation.getFixation().getX(),
+                            machineAnnotation.getFixation().getY(),
+                            machineAnnotation.getFixation().getDisagreement()),
+                    this.entityMapper.toBoundingBoxDto(machineAnnotation.getCharacterBoundingBox()),
+                    machineAnnotation.getDGeomWeight(),
+                    machineAnnotation.getPShareWeight());
+            machineAnnotations.getOrDefault(machineAnnotation.getTitle(), new HashSet<>()).add(annotationDto);
+        }
+
+
+        Set<Long> removedFixations = new HashSet<>();
+
+        for (Fixation fixation : annotationSession.getFixationsMarkedInvalid()) {
+            removedFixations.add(fixation.getId());
+        }
+
+        return new AnnotationSessionDto(annotationSession.getId(),
+                annotationSession.getAnnotator().getId(),
+                annotations,
+                metaDataDto,
+                this.readingSessionService.createReadingSessionDto(annotationSession.getReadingSession()),
+                machineAnnotations,
+                annotationSession.getActiveMachineAnnotations(),
+                annotationSession.getLastEdited(),
+                removedFixations,
+                Optional.ofNullable(annotationSession.getSurvey()).map(Survey::getFurtherOptions)
+                        .orElse(""));
+    }
+
+    private Set<AnnotationDto> getUserAnnotations(AnnotationSession annotationSession) {
         Set<AnnotationDto> annotations = new HashSet<>();
         for (UserAnnotation userAnnotation : annotationSession.getUserAnnotations()) {
             AnnotationDto annotationDto = new AnnotationDto(userAnnotation.getId(),
@@ -103,75 +137,6 @@ public class AnnotationSessionService {
                     null);
             annotations.add(annotationDto);
         }
-
-        String activeMachineAnnotation = null;
-
-        for (MachineAnnotation machineAnnotation : annotationSession.getMachineAnnotations()) {
-            AnnotationDto annotationDto = new AnnotationDto(machineAnnotation.getId(),
-                    AnnotationType.MACHINE_ANNOTATED,
-                    new FixationDto(machineAnnotation.getFixation().getId(),
-                            machineAnnotation.getFixation().getX(),
-                            machineAnnotation.getFixation().getY(),
-                            machineAnnotation.getFixation().getDisagreement()),
-                    this.entityMapper.toBoundingBoxDto(machineAnnotation.getCharacterBoundingBox()),
-                    machineAnnotation.getDGeomWeight(),
-                    machineAnnotation.getPShareWeight());
-            annotations.add(annotationDto);
-
-            if (activeMachineAnnotation == null) {
-                activeMachineAnnotation = machineAnnotation.getTitle();
-            }
-        }
-
-        List<MachineAnnotation> allMachineAnnotations = this.machineAnnotationRepository.findAllByReadingSessionIds(Collections.singletonList(annotationSession.getReadingSession().getId()));
-
-        Map<String, Set<MachineAnnotation>> machineAnnotationsById = new HashMap<>();
-        for (MachineAnnotation allMachineAnnotation : allMachineAnnotations) {
-            if (activeMachineAnnotation != null && activeMachineAnnotation.equals(allMachineAnnotation.getTitle())) {
-                continue;
-            }
-            if (!machineAnnotationsById.containsKey(allMachineAnnotation.getTitle())) {
-                machineAnnotationsById.put(allMachineAnnotation.getTitle(), new HashSet<>());
-            }
-            machineAnnotationsById.get(allMachineAnnotation.getTitle()).add(allMachineAnnotation);
-        }
-
-        Map<String, Set<AnnotationDto>> machineAnnotationDtos = new HashMap<>();
-        for (Map.Entry<String, Set<MachineAnnotation>> stringSetEntry : machineAnnotationsById.entrySet()) {
-            String title = stringSetEntry.getKey();
-            Set<AnnotationDto> value = new HashSet<>();
-            for (MachineAnnotation machineAnnotation : stringSetEntry.getValue()) {
-                AnnotationDto annotationDto = new AnnotationDto(machineAnnotation.getId(),
-                        AnnotationType.MACHINE_ANNOTATED,
-                        new FixationDto(machineAnnotation.getFixation().getId(),
-                                machineAnnotation.getFixation().getX(),
-                                machineAnnotation.getFixation().getY(),
-                                machineAnnotation.getFixation().getDisagreement()),
-                        this.entityMapper.toBoundingBoxDto(machineAnnotation.getCharacterBoundingBox()),
-                        machineAnnotation.getDGeomWeight(),
-                        machineAnnotation.getPShareWeight());
-                value.add(annotationDto);
-            }
-
-            machineAnnotationDtos.put(title, value);
-
-        }
-
-        Set<Long> removedFixations = new HashSet<>();
-
-        for (Fixation fixation : annotationSession.getFixationsMarkedInvalid()) {
-            removedFixations.add(fixation.getId());
-        }
-
-        return new AnnotationSessionDto(annotationSession.getId(),
-                annotationSession.getAnnotator().getId(),
-                annotations,
-                metaDataDto,
-                this.readingSessionService.createReadingSessionDto(annotationSession.getReadingSession()),
-                machineAnnotationDtos,
-                annotationSession.getLastEdited(),
-                removedFixations,
-                Optional.ofNullable(annotationSession.getSurvey()).map(Survey::getFurtherOptions)
-                        .orElse(""));
+        return annotations;
     }
 }

@@ -23,11 +23,74 @@ LOGIN_URL = f"{BASE_URL}/auth/login"
 REGISTER_URL = f"{BASE_URL}/auth/register"
 
 credentials = {
-    "id": "Paul",
-    "password": "123456",
-    "email": "paul@franos.ch",
+    "id": "IMPORT",
+    "password": "oi4PwZAxWqkSLQ",
+    "email": "import@eyetap.ch",
     "accountType": "SURVEY_ADMIN"
 }
+
+import json
+import math
+
+
+def find_nans(obj, path="root"):
+    """
+    Recursively locate NaN values inside nested dict/list structures.
+    """
+    if isinstance(obj, dict):
+        for k, v in obj.items():
+            find_nans(v, f"{path}.{k}")
+    elif isinstance(obj, list):
+        for i, v in enumerate(obj):
+            find_nans(v, f"{path}[{i}]")
+    elif isinstance(obj, float) and math.isnan(obj):
+        print(f"NaN found at {path}")
+
+
+def print_nan_rows(df, name):
+    nan_rows = df[df.isna().any(axis=1)]
+
+    if len(nan_rows) > 0:
+        print(f"\n===== NaN rows found in {name} =====")
+        print(nan_rows.to_string())
+        print("====================================\n")
+    else:
+        print(f"No NaN rows found in {name}")
+
+
+def validate_group(text_id, lang, text_group, char_group):
+    print(f"\n--- Validating {text_id}-{lang} ---")
+
+    print_nan_rows(text_group, f"text_group ({text_id}-{lang})")
+    print_nan_rows(char_group, f"char_group ({text_id}-{lang})")
+
+    coord_cols = ["x_min", "x_max", "y_min", "y_max"]
+
+    for col in coord_cols:
+        if col in text_group.columns:
+            bad = text_group[text_group[col].isna()]
+            if not bad.empty:
+                print(f"\nMissing {col} in text_group:")
+                print(bad.to_string())
+
+        if col in char_group.columns:
+            bad = char_group[char_group[col].isna()]
+            if not bad.empty:
+                print(f"\nMissing {col} in char_group:")
+                print(bad.to_string())
+
+
+def safe_float(value):
+    if pd.isna(value):
+        return None
+    return float(value)
+
+
+def safe_int(value):
+    if pd.isna(value):
+        return None
+    return int(value)
+
 
 # =========================
 # LOGIN / REGISTER
@@ -55,7 +118,9 @@ def get_jwt_token():
     print(f"JWT: {token}")
     return token
 
+
 TOKEN = get_jwt_token()
+
 
 # =========================
 # HELPERS
@@ -71,6 +136,7 @@ def encode_background_image_for_text(text_id, language):
     with open(image_path, "rb") as img_file:
         return base64.b64encode(img_file.read()).decode("utf-8")
 
+
 def post_json(url, payload):
     headers = {
         "Authorization": f"Bearer {TOKEN}",
@@ -82,6 +148,7 @@ def post_json(url, payload):
         response.raise_for_status()
     return response.json()
 
+
 def build_import_text_dto(text_group, char_group):
     text_id = int(text_group.iloc[0]["text_id"])
     language = text_group.iloc[0]["lang"]
@@ -90,29 +157,29 @@ def build_import_text_dto(text_group, char_group):
 
     word_boxes = [
         {
-            "foreignId": int(row["word_id"]),
+            "foreignId": safe_int(row["word_id"]),
             "word": row["word_text"],
-            "xMin": float(row["x_min"]),
-            "xMax": float(row["x_max"]),
-            "yMin": float(row["y_min"]),
-            "yMax": float(row["y_max"])
+            "xMin": safe_float(row["x_min"]),
+            "xMax": safe_float(row["x_max"]),
+            "yMin": safe_float(row["y_min"]),
+            "yMax": safe_float(row["y_max"])
         }
         for _, row in text_group.iterrows()
     ]
 
     char_boxes = [
         {
-            "foreignId": int(row["char_uid"]),
+            "foreignId": safe_int(row["char_uid"]),
             "character": row["char_text"],
-            "xMin": float(row["x_min"]),
-            "xMax": float(row["x_max"]),
-            "yMin": float(row["y_min"]),
-            "yMax": float(row["y_max"])
+            "xMin": safe_float(row["x_min"]),
+            "xMax": safe_float(row["x_max"]),
+            "yMin": safe_float(row["y_min"]),
+            "yMax": safe_float(row["y_max"])
         }
         for _, row in char_group.iterrows()
     ]
 
-    return {
+    dto = {
         "title": title,
         "foreignId": text_id,
         "language": language,
@@ -120,6 +187,9 @@ def build_import_text_dto(text_group, char_group):
         "wordBoundingBoxes": word_boxes,
         "backgroundImage": encode_background_image_for_text(text_id, language)
     }
+
+    return dto
+
 
 # =========================
 # MAIN EXECUTION
@@ -133,28 +203,52 @@ def main(languages_to_import=None):
 
     print("Importing texts...")
 
+
     for (text_id, lang), text_group in text_df.groupby(["text_id", "lang"]):
         if languages_to_import and lang not in languages_to_import:
             print(f"Skipping text {text_id}-{lang} due to language filter")
             continue
 
-        print(f"Processing text {text_id}-{lang}...")
+        print(f"\nProcessing text {text_id}-{lang}...")
+
         text_uids = text_group["text_uid"].unique()
         char_group = char_df[char_df["text_uid"].isin(text_uids)]
 
+        validate_group(text_id, lang, text_group, char_group)
+
         import_text_dto = build_import_text_dto(text_group, char_group)
+
+        print("Checking DTO for NaN values...")
+        find_nans(import_text_dto)
+
+        try:
+            json.dumps(import_text_dto, allow_nan=False)
+            print("DTO JSON validation passed.")
+        except ValueError as e:
+            print(f"\nJSON validation failed for {text_id}-{lang}")
+            print(e)
+
+            # print("\nDumping DTO structure:")
+            # print(json.dumps(import_text_dto, indent=2, default=str))
+
+            continue
 
         try:
             response = post_json(IMPORT_TEXT_ENDPOINT, import_text_dto)
             print(f"Imported text {text_id}-{lang}: {response}")
+
         except requests.HTTPError as e:
             if e.response.status_code == 409:
                 print(f"Text {text_id}-{lang} already exists. Skipping.")
             else:
+                print(f"HTTP error for {text_id}-{lang}:")
+                print(e.response.text)
                 raise
 
+        except Exception as e:
+            print(f"Unexpected error for {text_id}-{lang}: {e}")
+            raise
     print("Done.")
-
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Import texts with optional language filter")

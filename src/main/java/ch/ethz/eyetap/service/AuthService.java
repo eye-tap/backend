@@ -27,7 +27,6 @@ public class AuthService {
     private final AuthenticationManager authenticationManager;
     private final JwtService jwtService;
     private final UserRepository userRepository;
-    private final AnnotatorRepository annotatorRepository;
     private final PasswordEncoder passwordEncoder;
     private final PasswordGeneratorService passwordGeneratorService;
 
@@ -112,7 +111,7 @@ public class AuthService {
         for (String username : usernames) {
             User user = new User();
             user.setUsername(username);
-            String password = passwordGeneratorService.genPassword(8);
+            String password = PasswordGeneratorService.genPassword(16);
             user.setPassword(passwordEncoder.encode(password));
             user.setRole(ROLE_PARTICIPANT);
 

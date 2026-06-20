@@ -1,5 +1,6 @@
 package ch.ethz.eyetap;
 
+import ch.ethz.eyetap.service.PasswordGeneratorService;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.cache.annotation.EnableCaching;

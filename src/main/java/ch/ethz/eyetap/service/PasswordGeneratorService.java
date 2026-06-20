@@ -11,7 +11,7 @@ public class PasswordGeneratorService {
     private static final String CHAR_POOL = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*()-_=+";
     private static final SecureRandom RANDOM = new SecureRandom();
 
-    public String genPassword(int length) {
+    public static String genPassword(int length) {
         StringBuilder sb = new StringBuilder(length);
         for (int i = 0; i < length; i++) {
             int index = RANDOM.nextInt(CHAR_POOL.length());

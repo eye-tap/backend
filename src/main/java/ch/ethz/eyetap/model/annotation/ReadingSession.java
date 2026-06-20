@@ -37,6 +37,9 @@ public class ReadingSession {
     @Column(name = "uploaded_at")
     private LocalDateTime uploadedAt;
 
+    @OneToMany(mappedBy = "readingSession", orphanRemoval = true)
+    private Set<MachineAnnotation> machineAnnotations = new LinkedHashSet<>();
+
     @Override
     public String toString() {
         return new ToStringBuilder(this)

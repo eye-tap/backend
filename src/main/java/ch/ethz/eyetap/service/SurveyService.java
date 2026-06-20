@@ -92,8 +92,8 @@ public class SurveyService {
         Map<Long, Map<String, Set<MachineAnnotation>>> preAnnotationsByReadingSessionAndTitle = new HashMap<>();
         if (!readingSessionIds.isEmpty()) {
             // TODO: Make selected algorithms configurable
-            // List<MachineAnnotation> allMachineAnnotations = this.machineAnnotationRepository.findAllByReadingSessionIds(readingSessionIds);
-            List<MachineAnnotation> allMachineAnnotations = this.machineAnnotationRepository.findAllByReadingSessionIdsAndTitle(readingSessionIds, "Algorithm_popeye_slice");
+            List<MachineAnnotation> allMachineAnnotations = this.machineAnnotationRepository.findAllByReadingSessionIds(readingSessionIds);
+            // List<MachineAnnotation> allMachineAnnotations = this.machineAnnotationRepository.findAllByReadingSessionIdsAndTitle(readingSessionIds, "Algorithm_popeye_slice");
 
             // Group machine annotations by reading session ID and title
             for (MachineAnnotation ma : allMachineAnnotations) {
@@ -105,7 +105,6 @@ public class SurveyService {
         }
 
         Set<AnnotationSession> toSaveAnnotationSessions = new HashSet<>();
-        Set<MachineAnnotation> toSavePreAnnotations = new HashSet<>();
 
         for (Long readingSessionId : createSurveyDto.readingSessionIds()) {
             long tRSStart = System.nanoTime();
@@ -116,15 +115,10 @@ public class SurveyService {
             Map<String, Set<MachineAnnotation>> annotationsByTitle = preAnnotationsByReadingSessionAndTitle.getOrDefault(readingSessionId, new HashMap<>());
 
             // Pre-annotations
-            for (Map.Entry<String, Set<MachineAnnotation>> entry : annotationsByTitle.entrySet()) {
-                Set<MachineAnnotation> preAnnotations = entry.getValue();
-                for (User user : userSet) {
-                    AnnotationSession annotationSession = this.annotationSessionService.initialize(survey, user, readingSession);
-                    toSaveAnnotationSessions.add(annotationSession);
-                    annotationSession.setMachineAnnotations(preAnnotations);
-                    annotationSession.setDescription(textTitle + ", " + readingSession.getReader().getForeignId());
-                }
-                toSavePreAnnotations.addAll(preAnnotations);
+            for (User user : userSet) {
+                AnnotationSession annotationSession = this.annotationSessionService.initialize(survey, user, readingSession);
+                toSaveAnnotationSessions.add(annotationSession);
+                annotationSession.setDescription(textTitle + ", " + readingSession.getReader().getForeignId());
             }
 
             // No pre-annotations
@@ -141,7 +135,6 @@ public class SurveyService {
 
         long t7 = System.nanoTime();
         survey.setAnnotationSessions(toSaveAnnotationSessions);
-        this.machineAnnotationRepository.saveAll(toSavePreAnnotations);
         this.annotationSessionRepository.saveAll(toSaveAnnotationSessions);
         entityManager.flush();
         entityManager.clear();

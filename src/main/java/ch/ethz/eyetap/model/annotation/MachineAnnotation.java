@@ -39,18 +39,15 @@ public class MachineAnnotation {
     @JoinColumn(name = "word_bounding_box_id")
     private WordBoundingBox wordBoundingBox;
 
-    @ManyToOne
-    @JoinColumn(name = "reading_session_id")
-    private ReadingSession readingSession;
-
-    @ManyToMany(mappedBy = "machineAnnotations")
-    private Set<AnnotationSession> annotationSessions = new LinkedHashSet<>();
-
     @Column(name = "d_geom_weight")
     private Double dGeomWeight;
 
     @Column(name = "p_share_weight")
     private Double pShareWeight;
+
+    @ManyToOne(optional = false)
+    @JoinColumn(name = "reading_session_id", nullable = false)
+    private ReadingSession readingSession;
 
     @Override
     public final boolean equals(Object o) {

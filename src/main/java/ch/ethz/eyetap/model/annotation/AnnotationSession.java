@@ -46,12 +46,6 @@ public class AnnotationSession {
     @Column(name = "last_edited", nullable = false)
     private LocalDateTime lastEdited;
 
-    @ManyToMany
-    @JoinTable(name = "annotation_session_machine_annotations",
-            joinColumns = @JoinColumn(name = "annotationSession_id"),
-            inverseJoinColumns = @JoinColumn(name = "machineAnnotations_id"))
-    private Set<MachineAnnotation> machineAnnotations = new LinkedHashSet<>();
-
     @Column(name = "description")
     private String description;
 
@@ -66,6 +60,11 @@ public class AnnotationSession {
             joinColumns = @JoinColumn(name = "annotationSession_id"),
             inverseJoinColumns = @JoinColumn(name = "fixations_id"))
     private Set<Fixation> fixationsMarkedInvalid = new LinkedHashSet<>();
+
+    @ElementCollection
+    @Column(name = "active_machine_annotation")
+    @CollectionTable(name = "annotation_session_active_machine_annotations", joinColumns = @JoinColumn(name = "owner_id"))
+    private Set<String> activeMachineAnnotations = new LinkedHashSet<>();
 
     @Override
     public String toString() {
