@@ -52,9 +52,6 @@ public class AnnotationSession {
     @Column(name = "uses_partial_machine_annotation", nullable = false)
     private Boolean usesPartialMachineAnnotation = false;
 
-    @Column(name = "initialized")
-    private Boolean initialized;
-
     @ManyToMany
     @JoinTable(name = "annotation_session_fixations",
             joinColumns = @JoinColumn(name = "annotationSession_id"),

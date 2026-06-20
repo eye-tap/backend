@@ -78,49 +78,98 @@ public class AnnotationSessionService {
         this.annotationSessionRepository.delete(annotationSession);
     }
 
+
     public AnnotationSessionDto calculateAnnotationSessionDtoById(final Long id) {
-        AnnotationSession referenceById = this.annotationSessionRepository.getReferenceById(id);
-        return this.calculateAnnotationSessionDto(referenceById);
+        AnnotationSession annotationSession =
+                this.annotationSessionRepository.findById(id)
+                        .orElseThrow();
+        return this.calculateAnnotationSessionDto(annotationSession);
     }
 
     public AnnotationSessionDto calculateAnnotationSessionDto(final AnnotationSession annotationSession) {
         return annotationSessionDto(annotationSession, this.calculateAnnotationsMetaData(annotationSession.getId()));
     }
 
-    private AnnotationSessionDto annotationSessionDto(final AnnotationSession annotationSession, AnnotationsMetaDataDto metaDataDto) {
-        Set<AnnotationDto> annotations = getUserAnnotations(annotationSession);
+    private AnnotationSessionDto annotationSessionDto(
+            final AnnotationSession annotationSession,
+            AnnotationsMetaDataDto metaDataDto
+    ) {
+
+        // ----------------------------
+        // USER ANNOTATIONS (safe copy inside method)
+        // ----------------------------
+        Set<AnnotationDto> annotations =
+                new LinkedHashSet<>(getUserAnnotations(annotationSession));
+
+        // ----------------------------
+        // MACHINE ANNOTATIONS (safe copy first)
+        // ----------------------------
+        List<MachineAnnotation> machineAnnotationList =
+                new ArrayList<>(annotationSession.getReadingSession().getMachineAnnotations());
+
         Map<String, Set<AnnotationDto>> machineAnnotations = new HashMap<>();
-        for (MachineAnnotation machineAnnotation : annotationSession.getReadingSession().getMachineAnnotations()) {
-            AnnotationDto annotationDto = new AnnotationDto(machineAnnotation.getId(),
+
+        for (MachineAnnotation machineAnnotation : machineAnnotationList) {
+
+            AnnotationDto annotationDto = new AnnotationDto(
+                    machineAnnotation.getId(),
                     AnnotationType.MACHINE_ANNOTATED,
-                    new FixationDto(machineAnnotation.getFixation().getId(),
+                    new FixationDto(
+                            machineAnnotation.getFixation().getId(),
                             machineAnnotation.getFixation().getX(),
                             machineAnnotation.getFixation().getY(),
-                            machineAnnotation.getFixation().getDisagreement()),
+                            machineAnnotation.getFixation().getDisagreement()
+                    ),
                     this.entityMapper.toBoundingBoxDto(machineAnnotation.getCharacterBoundingBox()),
                     machineAnnotation.getDGeomWeight(),
-                    machineAnnotation.getPShareWeight());
-            machineAnnotations.getOrDefault(machineAnnotation.getTitle(), new HashSet<>()).add(annotationDto);
+                    machineAnnotation.getPShareWeight()
+            );
+
+            machineAnnotations
+                    .computeIfAbsent(machineAnnotation.getTitle(), k -> new LinkedHashSet<>())
+                    .add(annotationDto);
         }
 
-
-        Set<Long> removedFixations = new HashSet<>();
+        // ----------------------------
+        // REMOVED FIXATIONS (safe copy)
+        // ----------------------------
+        Set<Long> removedFixations = new LinkedHashSet<>();
 
         for (Fixation fixation : annotationSession.getFixationsMarkedInvalid()) {
             removedFixations.add(fixation.getId());
         }
 
-        return new AnnotationSessionDto(annotationSession.getId(),
+        // ----------------------------
+        // ACTIVE MACHINE ANNOTATIONS (safe copy)
+        // ----------------------------
+        Set<String> activeMachineAnnotations =
+                new LinkedHashSet<>(annotationSession.getActiveMachineAnnotations());
+
+        // ----------------------------
+        // SAFE READING SESSION DTO (IMPORTANT FIX)
+        // ----------------------------
+        ReadingSessionDto readingSessionDto =
+                this.readingSessionService.createReadingSessionDto(
+                        annotationSession.getReadingSession()
+                );
+
+        // ----------------------------
+        // BUILD DTO
+        // ----------------------------
+        return new AnnotationSessionDto(
+                annotationSession.getId(),
                 annotationSession.getAnnotator().getId(),
                 annotations,
                 metaDataDto,
-                this.readingSessionService.createReadingSessionDto(annotationSession.getReadingSession()),
+                readingSessionDto,
                 machineAnnotations,
-                annotationSession.getActiveMachineAnnotations(),
+                activeMachineAnnotations,
                 annotationSession.getLastEdited(),
                 removedFixations,
-                Optional.ofNullable(annotationSession.getSurvey()).map(Survey::getFurtherOptions)
-                        .orElse(""));
+                Optional.ofNullable(annotationSession.getSurvey())
+                        .map(Survey::getFurtherOptions)
+                        .orElse("")
+        );
     }
 
     private Set<AnnotationDto> getUserAnnotations(AnnotationSession annotationSession) {
