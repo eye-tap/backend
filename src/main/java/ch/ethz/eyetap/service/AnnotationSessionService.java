@@ -7,6 +7,7 @@ import ch.ethz.eyetap.model.User;
 import ch.ethz.eyetap.model.annotation.*;
 import ch.ethz.eyetap.model.survey.Survey;
 import ch.ethz.eyetap.repository.AnnotationSessionRepository;
+import ch.ethz.eyetap.repository.UserAnnotationRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -23,6 +24,7 @@ public class AnnotationSessionService {
 
     private final ReadingSessionService readingSessionService;
     private final AnnotationSessionRepository annotationSessionRepository;
+    private final UserAnnotationRepository userAnnotationRepository;
     private final EntityMapper entityMapper;
 
     public Set<Long> annotationSessionIdsByUserId(Annotator annotator) {
@@ -46,7 +48,8 @@ public class AnnotationSessionService {
 
     public AnnotationsMetaDataDto calculateAnnotationsMetaData(Long annotationSessionId) {
         int total = Math.toIntExact(this.annotationSessionRepository.countTotalFixationsByAnnotationSessionId(annotationSessionId));
-        int set = Math.toIntExact(this.annotationSessionRepository.countSetAnnotationsByAnnotationSessionId(annotationSessionId));
+        int set = Math.toIntExact(this.annotationSessionRepository.countSetAnnotationsByAnnotationSessionId(annotationSessionId)
+                + this.annotationSessionRepository.countInvalidFixations(annotationSessionId));
 
         return new AnnotationsMetaDataDto(total, set);
     }
@@ -75,9 +78,10 @@ public class AnnotationSessionService {
     }
 
     public void delete(AnnotationSession annotationSession) {
+        Set<UserAnnotation> userAnnotations = annotationSession.getUserAnnotations();
+        this.userAnnotationRepository.deleteAll(userAnnotations);
         this.annotationSessionRepository.delete(annotationSession);
     }
-
 
     public AnnotationSessionDto calculateAnnotationSessionDtoById(final Long id) {
         AnnotationSession annotationSession =

@@ -7,7 +7,9 @@ import lombok.*;
 @Setter
 @Builder
 @Entity
-@Table(name = "user_annotation")
+@Table(name = "user_annotation", uniqueConstraints = {
+        @UniqueConstraint(name = "uc_userannotation_fixation_id", columnNames = {"fixation_id", "annotation_session_id"})
+})
 @NoArgsConstructor
 @AllArgsConstructor
 public class UserAnnotation {

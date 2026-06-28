@@ -12,7 +12,6 @@ import org.springframework.web.server.ResponseStatusException;
 
 import java.time.LocalDateTime;
 import java.util.*;
-import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -53,7 +52,7 @@ public class AnnotationService {
             CharacterBoundingBox characterBoundingBox = characterBoundingBoxRepository.findById(characterId)
                     .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "CharacterBoundingBox " + characterId + " not found"));
 
-            UserAnnotation annotation = findOrCreateAnnotationByFixationIdInSession(fixationId, sessionId)
+            UserAnnotation annotation = userAnnotationRepository.findByFixationIdAndSessionId(fixationId, sessionId)
                     .map(userAnnotation -> {
                         userAnnotation.setCharacterBoundingBox(characterBoundingBox);
                         return userAnnotation;
@@ -89,6 +88,8 @@ public class AnnotationService {
         log.info("Removed {} user annotations in {} ms",
                 userAnnotationsToRemove.size(), (t8 - t7) / 1_000_000);
 
+        this.userAnnotationRepository.deleteAll(userAnnotationsToRemove);
+
         // --- Step 4: Mark fixations invalid / undo ---
         long t9 = System.nanoTime();
         for (Long fixationId : fixationsToRemove) {
@@ -112,10 +113,6 @@ public class AnnotationService {
         log.info("Total annotate() method took {} ms", (t12 - startTime) / 1_000_000);
 
         return dto;
-    }
-
-    private Optional<UserAnnotation> findOrCreateAnnotationByFixationIdInSession(Long fixationId, Long sessionId) {
-        return userAnnotationRepository.findByFixationIdAndSessionId(fixationId, sessionId);
     }
 
     private Fixation findOrThrow(Long fixationId, Set<Fixation> fixations) {

@@ -28,12 +28,19 @@ public interface AnnotationSessionRepository extends JpaRepository<AnnotationSes
     long countTotalFixationsByAnnotationSessionId(@Param("annotationSessionId") Long id);
 
     @Query("""
-            SELECT 
-                (SELECT COUNT(uan) 
+                SELECT COUNT(uan) 
                  FROM UserAnnotation uan 
-                 WHERE uan.annotationSession.id = :annotationSessionId)
+                 WHERE uan.annotationSession.id = :annotationSessionId
             """)
     long countSetAnnotationsByAnnotationSessionId(@Param("annotationSessionId") Long annotationSessionId);
+
+    @Query("""
+                SELECT COUNT(f)
+                FROM AnnotationSession s
+                JOIN s.fixationsMarkedInvalid f
+                WHERE s.id = :annotationSessionId
+            """)
+    long countInvalidFixations(@Param("annotationSessionId") Long annotationSessionId);
 
     @Query("""
                 SELECT a.annotator.id
@@ -55,27 +62,21 @@ public interface AnnotationSessionRepository extends JpaRepository<AnnotationSes
                 FROM AnnotationSession a
                 WHERE a.id = :annotationSessionId
             """)
-    LocalDateTime lastEditedByAnnotationSessionId(
-            @Param("annotationSessionId") Long annotationSessionId
-    );
+    LocalDateTime lastEditedByAnnotationSessionId(@Param("annotationSessionId") Long annotationSessionId);
 
     @Query("""
                 SELECT a.description
                 FROM AnnotationSession a
                 WHERE a.id = :annotationSessionId
             """)
-    String descriptionByAnnotationSessionId(
-            @Param("annotationSessionId") Long annotationSessionId
-    );
+    String descriptionByAnnotationSessionId(@Param("annotationSessionId") Long annotationSessionId);
 
     @Query("""
                 SELECT a.survey.furtherOptions
                 FROM AnnotationSession a
                 WHERE a.id = :annotationSessionId
             """)
-    String furtherOptionsByAnnotationSessionId(
-            @Param("annotationSessionId") Long annotationSessionId
-    );
+    String furtherOptionsByAnnotationSessionId(@Param("annotationSessionId") Long annotationSessionId);
 
     @Query("""
                 SELECT a FROM AnnotationSession a
