@@ -56,4 +56,27 @@ public class UserController {
         return annotatorRepository.save(annotator).getFurtherOptions();
     }
 
+    @GetMapping("/analytics")
+    public String getUserAnalytics(@AuthenticationPrincipal User user) {
+        return user.getAnnotator().getAnalytics();
+    }
+
+    @PostMapping("/analytics")
+    public String updateUserAnalytics(
+            @AuthenticationPrincipal User user,
+            @RequestBody String analytics) {
+        Annotator annotator = user.getAnnotator();
+        annotator.setAnalytics(analytics);
+        return annotatorRepository.save(annotator).getAnalytics();
+    }
+
+    @PostMapping("/analytics/append")
+    public String appendUserAnalytics(
+            @AuthenticationPrincipal User user,
+            @RequestBody String analytics) {
+        Annotator annotator = user.getAnnotator();
+        annotator.setAnalytics(annotator.getAnalytics() + analytics);
+        return annotatorRepository.save(annotator).getAnalytics();
+    }
+
 }

@@ -32,5 +32,7 @@ public class Annotator {
     @Column(name = "further_options")
     private String furtherOptions;
 
+    @Column(name = "analytics")
+    private String analytics;
 
 }
