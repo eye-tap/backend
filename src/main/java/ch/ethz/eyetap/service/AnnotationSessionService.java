@@ -48,10 +48,10 @@ public class AnnotationSessionService {
 
     public AnnotationsMetaDataDto calculateAnnotationsMetaData(Long annotationSessionId) {
         int total = Math.toIntExact(this.annotationSessionRepository.countTotalFixationsByAnnotationSessionId(annotationSessionId));
-        int set = Math.toIntExact(this.annotationSessionRepository.countSetAnnotationsByAnnotationSessionId(annotationSessionId)
-                + this.annotationSessionRepository.countInvalidFixations(annotationSessionId));
+        int set = Math.toIntExact(this.annotationSessionRepository.countSetAnnotationsByAnnotationSessionId(annotationSessionId));
 
-        return new AnnotationsMetaDataDto(total, set);
+        int invalid = Math.toIntExact(this.annotationSessionRepository.countInvalidFixations(annotationSessionId));
+        return new AnnotationsMetaDataDto(total, set, invalid);
     }
 
     public ShallowAnnotationSessionDto calculateShallowAnnotationSessionDto(Long annotationSessionId) {
