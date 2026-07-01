@@ -193,9 +193,15 @@ public class SurveyService {
                 .collect(Collectors.toMap(r -> (Long) r[0], r -> ((Number) r[1]).intValue()));
 
         List<Object[]> annotatedCountList = annotationSessionRepository.findAnnotatedCounts(sessionIds);
-        Map<Long, Integer> annotatedCounts = annotatedCountList.stream()
-                .collect(Collectors.toMap(r -> (Long) r[0], r -> ((Number) r[1]).intValue()));
 
+        Map<Long, SessionCounts> countsBySession = annotatedCountList.stream()
+                .collect(Collectors.toMap(
+                        r -> (Long) r[0],
+                        r -> new SessionCounts(
+                                ((Number) r[1]).intValue(),
+                                ((Number) r[2]).intValue()
+                        )
+                ));
         Set<ShallowAnnotationSessionDto> sessionDtos = new LinkedHashSet<>();
 
         for (AnnotationSession a : sessions) {
@@ -207,7 +213,7 @@ public class SurveyService {
             String textTitle = t.getTitle();
 
             int fixationCount = fixationCounts.getOrDefault(readingSessionId, 0);
-            int annotatedCount = annotatedCounts.getOrDefault(a.getId(), 0);
+            SessionCounts sessionCounts = countsBySession.getOrDefault(a.getId(), new SessionCounts(0, 0));
 
             ShallowReadingSessionDto readingSessionDto = new ShallowReadingSessionDto(
                     readingSessionId,
@@ -220,7 +226,8 @@ public class SurveyService {
 
             AnnotationsMetaDataDto metaData = new AnnotationsMetaDataDto(
                     fixationCount,
-                    annotatedCount
+                    sessionCounts.annotationCount(),
+                    sessionCounts.invalidFixationCount()
             );
 
             ShallowAnnotationSessionDto sessionDto = new ShallowAnnotationSessionDto(
@@ -276,5 +283,11 @@ public class SurveyService {
                 .anyMatch(adminId -> Objects.equals(adminId, userId));
         log.info("User {} has access for survey {}: {}", userId, survey.getId(), access);
         return access;
+    }
+
+    private record SessionCounts(
+            int annotationCount,
+            int invalidFixationCount
+    ) {
     }
 }

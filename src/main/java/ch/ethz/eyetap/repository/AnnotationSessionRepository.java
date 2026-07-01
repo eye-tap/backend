@@ -87,11 +87,14 @@ public interface AnnotationSessionRepository extends JpaRepository<AnnotationSes
     List<AnnotationSession> findBySurveyIdWithAnnotatorAndReadingSession(@Param("surveyId") Long surveyId);
 
     @Query("""
-                SELECT a.id, 
-                       (SELECT COUNT(ua) FROM UserAnnotation ua WHERE ua.annotationSession.id = a.id)
-                FROM AnnotationSession a
-                WHERE a.id IN :annotationSessionIds
-            """)
-    List<Object[]> findAnnotatedCounts(@Param("annotationSessionIds") List<Long> annotationSessionIds);
-
+    SELECT a.id,
+           (SELECT COUNT(ua)
+            FROM UserAnnotation ua
+            WHERE ua.annotationSession.id = a.id),
+           SIZE(a.fixationsMarkedInvalid)
+    FROM AnnotationSession a
+    WHERE a.id IN :annotationSessionIds
+""")
+    List<Object[]> findAnnotatedCounts(
+            @Param("annotationSessionIds") List<Long> annotationSessionIds);
 }
