@@ -34,7 +34,7 @@ public class Annotator {
     @Column(name = "further_options")
     private String furtherOptions;
 
-    @Column(name = "analytics")
+    @Column(name = "analytics", length = 10000)
     @JdbcTypeCode(SqlTypes.LONGVARCHAR)
     private String analytics;
 
