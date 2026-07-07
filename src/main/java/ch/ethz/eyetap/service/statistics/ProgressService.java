@@ -40,7 +40,7 @@ public class ProgressService {
     }
 
 
-    @Scheduled(fixedRate = 30 * 60 * 1000)
+    @Scheduled(fixedRate = 60 * 60 * 1000)
     public void refreshProgress() {
         log.info("Refreshing progress statistics");
 
