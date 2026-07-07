@@ -3,6 +3,7 @@ package ch.ethz.eyetap.service;
 import ch.ethz.eyetap.dto.ImportCharacterBoundingBoxDto;
 import ch.ethz.eyetap.dto.ImportTextDto;
 import ch.ethz.eyetap.dto.ImportWordBoundingBoxDto;
+import ch.ethz.eyetap.dto.ShallowTextDto;
 import ch.ethz.eyetap.model.annotation.BoundingBox;
 import ch.ethz.eyetap.model.annotation.CharacterBoundingBox;
 import ch.ethz.eyetap.model.annotation.Text;
@@ -77,5 +78,9 @@ public class TextService {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Text with this title already exists");
         }
         return textRepository.save(text);
+    }
+
+    public ShallowTextDto toShallowTextDto(Text text) {
+        return new ShallowTextDto(text.getId(), text.getTitle());
     }
 }

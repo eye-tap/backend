@@ -6,17 +6,24 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.util.Optional;
+import java.util.Set;
 
 public interface UserAnnotationRepository extends JpaRepository<UserAnnotation, Long> {
     /**
      * Finds an annotation by its ID that belongs to a specific annotation session.
      */
     @Query("""
-        SELECT a
-        FROM UserAnnotation a
-        WHERE a.fixation.id = :fixationId
-          AND a.annotationSession.id = :sessionId
-    """)
+                SELECT a
+                FROM UserAnnotation a
+                WHERE a.fixation.id = :fixationId
+                  AND a.annotationSession.id = :sessionId
+            """)
     Optional<UserAnnotation> findByFixationIdAndSessionId(@Param("fixationId") Long fixationId,
                                                           @Param("sessionId") Long sessionId);
+
+    @Query("""
+                SELECT DISTINCT ua.fixation.id
+                FROM UserAnnotation ua
+            """)
+    Set<Long> findAnnotatedFixationIds();
 }

@@ -16,7 +16,7 @@ public class CacheConfig {
     @Bean
     public CacheManager cacheManager() {
         CaffeineCacheManager manager =
-                new CaffeineCacheManager("surveys_all");
+                new CaffeineCacheManager("surveys_all", "progress");
 
         manager.setCaffeine(
                 Caffeine.newBuilder()

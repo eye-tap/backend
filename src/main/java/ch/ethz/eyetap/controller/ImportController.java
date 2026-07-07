@@ -30,7 +30,7 @@ public class ImportController {
     public ShallowTextDto text(@RequestBody ImportTextDto textDto) {
         Text save = this.textService.save(textDto);
         log.info("Text {} saved", save.getTitle());
-        return new ShallowTextDto(save.getId(), save.getTitle());
+        return this.textService.toShallowTextDto(save);
     }
 
     @PreAuthorize("hasRole('SURVEY_ADMIN')")

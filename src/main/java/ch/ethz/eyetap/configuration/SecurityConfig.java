@@ -45,17 +45,18 @@ public class SecurityConfig {
                 .requestMatchers("/swagger-ui/**").permitAll()
                 .requestMatchers("/actuator/health").permitAll()
                 .requestMatchers("/debug/**").permitAll()
+                .requestMatchers("/progress").permitAll()
                 .anyRequest().authenticated()
         );
 
-        http.cors(cors -> cors.configurationSource(request -> {
-            CorsConfiguration config = new CorsConfiguration();
-            config.setAllowedOrigins(Arrays.stream(allowedOrigins).toList());
-            config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
-            config.setAllowedHeaders(List.of("*")); // allow Authorization, Content-Type, etc.
-            config.setAllowCredentials(true);
-            return config;
-        }));
+//        http.cors(cors -> cors.configurationSource(request -> {
+//            CorsConfiguration config = new CorsConfiguration();
+//            config.setAllowedOrigins(Arrays.stream(allowedOrigins).toList());
+//            config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+//            config.setAllowedHeaders(List.of("*")); // allow Authorization, Content-Type, etc.
+//            config.setAllowCredentials(true);
+//            return config;
+//        }));
 
         http.sessionManagement(session ->
                 session.sessionCreationPolicy(

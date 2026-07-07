@@ -2,6 +2,7 @@ package ch.ethz.eyetap.repository;
 
 import ch.ethz.eyetap.model.annotation.AnnotationSession;
 import ch.ethz.eyetap.model.annotation.Annotator;
+import ch.ethz.eyetap.model.annotation.ReadingSession;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -87,14 +88,25 @@ public interface AnnotationSessionRepository extends JpaRepository<AnnotationSes
     List<AnnotationSession> findBySurveyIdWithAnnotatorAndReadingSession(@Param("surveyId") Long surveyId);
 
     @Query("""
-    SELECT a.id,
-           (SELECT COUNT(ua)
-            FROM UserAnnotation ua
-            WHERE ua.annotationSession.id = a.id),
-           SIZE(a.fixationsMarkedInvalid)
-    FROM AnnotationSession a
-    WHERE a.id IN :annotationSessionIds
-""")
+                SELECT a.id,
+                       (SELECT COUNT(ua)
+                        FROM UserAnnotation ua
+                        WHERE ua.annotationSession.id = a.id),
+                       SIZE(a.fixationsMarkedInvalid)
+                FROM AnnotationSession a
+                WHERE a.id IN :annotationSessionIds
+            """)
     List<Object[]> findAnnotatedCounts(
             @Param("annotationSessionIds") List<Long> annotationSessionIds);
+
+    List<AnnotationSession> findAnnotationSessionsByReadingSession(ReadingSession readingSession);
+
+    @Query("""
+                SELECT DISTINCT f.id
+                FROM AnnotationSession a
+                JOIN a.fixationsMarkedInvalid f
+            """)
+    Set<Long> findInvalidFixationIds();
+
+
 }

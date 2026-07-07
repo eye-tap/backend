@@ -6,6 +6,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 public interface ReadingSessionRepository extends JpaRepository<ReadingSession, Long> {
     @Query("""
@@ -35,4 +36,19 @@ public interface ReadingSessionRepository extends JpaRepository<ReadingSession, 
     LocalDateTime lastEditedByAnnotationSessionId(
             @Param("id") Long id
     );
+
+    @Query("""
+                SELECT COUNT(f)
+                FROM ReadingSession rs
+                JOIN rs.fixations f
+            """)
+    long countAllFixations();
+
+    @Query("""
+                SELECT rs.id, COUNT(f)
+                FROM ReadingSession rs
+                LEFT JOIN rs.fixations f
+                GROUP BY rs.id
+            """)
+    List<Object[]> findFixationCountsByReadingSession();
 }
