@@ -96,7 +96,7 @@ public class ProgressService {
 
         Map<ProgressDto.ProgressKey, ReadingSessionProgressDto> result = new HashMap<>();
         for (ReadingSession readingSession : this.readingSessionRepository.findAll()) {
-            ProgressDto.ProgressKey key = new ProgressDto.ProgressKey(readingSession.getId(),
+            ProgressDto.ProgressKey key = new ProgressDto.ProgressKey(readingSession.getReader().getId(),
                     this.textService.toShallowTextDto(readingSession.getText()),
                     readingSession.getText().getLanguage());
 

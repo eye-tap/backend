@@ -9,7 +9,7 @@ import java.util.Map;
 public record ProgressDto(OverallProgressStatisticsDto statisticsDto,
                           Map<ProgressKey, ReadingSessionProgressDto> progress) {
 
-    public record ProgressKey(Long id, ShallowTextDto shallowText, String language) {
+    public record ProgressKey(Long readerId, ShallowTextDto shallowText, String language) {
 
     }
 
