@@ -65,6 +65,7 @@ public class ProgressService {
     }
 
     private OverallProgressStatisticsDto calculateStatistics() {
+        Double[] doneProgress = this.calculateProgressUntilEverythingIsAnnotatedOnce();
         return OverallProgressStatisticsDto.builder()
                 .numberOfReadingSessions(
                         Math.toIntExact(this.readingSessionRepository.count())
@@ -73,11 +74,12 @@ public class ProgressService {
                 .numberOfTexts(Math.toIntExact(this.textRepository.count()))
                 .numberOfUniqueAnnotators(Math.toIntExact(this.annotatorRepository.count()))
                 .numberOfAnnotations(Math.toIntExact(this.userAnnotationRepository.count()))
-                .progressUntilEverythingIsAnnotatedOnce(this.calculateProgressUntilEverythingIsAnnotatedOnce())
+                .progressUntilEverythingIsAnnotatedOnce(doneProgress[1])
+                .numberOfFixations(doneProgress[0].intValue())
                 .build();
     }
 
-    private Double calculateProgressUntilEverythingIsAnnotatedOnce() {
+    private Double[] calculateProgressUntilEverythingIsAnnotatedOnce() {
         int totalFixations = (int) this.readingSessionRepository.countAllFixations();
 
         Set<Long> fixationsThatAreAnnotated =
@@ -87,7 +89,7 @@ public class ProgressService {
                 annotationSessionRepository.findInvalidFixationIds()
         );
 
-        return ((double) fixationsThatAreAnnotated.size()) / totalFixations;
+        return new Double[] { ((double) totalFixations), ((double) fixationsThatAreAnnotated.size()) / totalFixations };
     }
 
     private Map<ProgressDto.ProgressKey, ReadingSessionProgressDto> calculatePerReadingSessionProgress() {
