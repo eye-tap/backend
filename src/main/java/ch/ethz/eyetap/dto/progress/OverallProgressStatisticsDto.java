@@ -8,5 +8,6 @@ public record OverallProgressStatisticsDto(Double progressUntilEverythingIsAnnot
                                            Integer numberOfAnnotations,
                                            Integer numberOfReadingSessions,
                                            Integer numberOfTexts,
-                                           Integer numberOfSurveys) {
+                                           Integer numberOfSurveys,
+                                           Integer numberOfFixations) {
 }
