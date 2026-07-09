@@ -3,6 +3,8 @@ package ch.ethz.eyetap.service;
 import ch.ethz.eyetap.EntityMapper;
 import ch.ethz.eyetap.dto.*;
 import ch.ethz.eyetap.model.annotation.*;
+import ch.ethz.eyetap.model.survey.Survey;
+import ch.ethz.eyetap.model.survey.SurveyType;
 import ch.ethz.eyetap.repository.*;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -27,6 +29,7 @@ public class ReadingSessionService {
     private final CharacterBoundingBoxRepository characterBoundingBoxRepository;
     private final MachineAnnotationRepository machineAnnotationRepository;
     private final EntityMapper entityMapper;
+    private final SurveyRepository surveyRepository;
 
     @Transactional
     public ReadingSession save(ImportReadingSessionDto importReadingSessionDto) {
@@ -143,7 +146,11 @@ public class ReadingSessionService {
     public ShallowReadingSessionDto shallowReadingSessionDto(Long id) {
         ReadingSession readingSession = this.readingSessionRepository.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "No reading session with id " + id));
-        return new ShallowReadingSessionDto(id,
+        return constructShallowReadingSessionDto(readingSession);
+    }
+
+    private static ShallowReadingSessionDto constructShallowReadingSessionDto(ReadingSession readingSession) {
+        return new ShallowReadingSessionDto(readingSession.getId(),
                 readingSession.getReader().getId(),
                 readingSession.getText().getId(),
                 readingSession.getText().getTitle(),
@@ -165,6 +172,22 @@ public class ReadingSessionService {
 
     private record Tuple(Long foreignId, FixationDto value) {
     }
+
+    public Set<ShallowReadingSessionDto> getReadingSessionsOfPublicSurvey(Long surveyId) {
+        Survey survey = this.surveyRepository.getReferenceById(surveyId);
+        if (!survey.getSurveyType().equals(SurveyType.PUBLIC))
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "There exists no public survey associated with the provided id");
+        return survey.getDataSet().getTexts().stream().map(Text::getReadingSessions)
+                .flatMap(Collection::stream)
+                .map(ReadingSessionService::constructShallowReadingSessionDto)
+                .collect(Collectors.toSet());
+    }
+
+    public ReadingSession getOrThrow(Long readingSessionId) {
+        return this.readingSessionRepository.findById(readingSessionId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "No reading session with id " + readingSessionId));
+    }
+
 }
 
 

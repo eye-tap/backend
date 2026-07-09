@@ -2,6 +2,7 @@ package ch.ethz.eyetap.controller;
 
 import ch.ethz.eyetap.EntityMapper;
 import ch.ethz.eyetap.dto.CreateSurveyDto;
+import ch.ethz.eyetap.dto.ShallowSurveyDto;
 import ch.ethz.eyetap.dto.SurveyCreatedDto;
 import ch.ethz.eyetap.dto.SurveyDto;
 import ch.ethz.eyetap.model.User;
@@ -58,6 +59,12 @@ public class SurveyController {
         Set<SurveyDto> collect = this.surveyService.getAll(user.getId());
         HibernateStatisticsPrinter.print(this.sessionFactory.getStatistics());
         return collect;
+    }
+
+    @GetMapping("/public")
+    @Transactional
+    public Set<ShallowSurveyDto> getPublic() {
+        return this.surveyService.getPublic();
     }
 
     @PreAuthorize("hasRole('SURVEY_ADMIN')")

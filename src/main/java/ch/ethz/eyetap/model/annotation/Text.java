@@ -43,6 +43,10 @@ public class Text {
     @Column(name = "language")
     private String language;
 
+    @ManyToOne
+    @JoinColumn(name = "data_set_id")
+    private DataSet dataSet;
+
     @Override
     public String toString() {
         return new ToStringBuilder(this)

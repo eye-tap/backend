@@ -2,6 +2,7 @@ package ch.ethz.eyetap.model.survey;
 
 import ch.ethz.eyetap.model.User;
 import ch.ethz.eyetap.model.annotation.AnnotationSession;
+import ch.ethz.eyetap.model.annotation.DataSet;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
@@ -23,7 +24,7 @@ public class Survey {
     @JoinTable(name = "survey_users",
             joinColumns = @JoinColumn(name = "survey_id"),
             inverseJoinColumns = @JoinColumn(name = "users_id"))
-    private Set<User> users = new LinkedHashSet<>();
+    private Set<User> users = new LinkedHashSet<>(); //
 
     @Column(name = "title")
     private String title;
@@ -40,7 +41,15 @@ public class Survey {
             inverseJoinColumns = @JoinColumn(name = "admin_id"))
     private Set<User> admin = new LinkedHashSet<>();
 
-    @Column(name = "furhter_options") // todo: fix typo
+    @Column(name = "further_options")
     private String furtherOptions;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "survey_type", nullable = false)
+    private SurveyType surveyType = SurveyType.PRIVATE;
+
+    @ManyToOne
+    @JoinColumn(name = "data_set_id", unique = true)
+    private DataSet dataSet;
 
 }

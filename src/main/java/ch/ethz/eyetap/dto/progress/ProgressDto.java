@@ -5,7 +5,7 @@ import lombok.Builder;
 
 import java.util.Map;
 
-@Builder
+@Builder(toBuilder = true)
 public record ProgressDto(OverallProgressStatisticsDto statisticsDto,
                           Map<ProgressKey, ReadingSessionProgressDto> progress) {
 

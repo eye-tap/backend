@@ -3,12 +3,14 @@ package ch.ethz.eyetap.repository;
 import ch.ethz.eyetap.model.annotation.AnnotationSession;
 import ch.ethz.eyetap.model.annotation.Annotator;
 import ch.ethz.eyetap.model.annotation.ReadingSession;
+import ch.ethz.eyetap.model.survey.Survey;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 
 public interface AnnotationSessionRepository extends JpaRepository<AnnotationSession, Long> {
@@ -18,6 +20,16 @@ public interface AnnotationSessionRepository extends JpaRepository<AnnotationSes
     // Returns only the IDs of annotation sessions for a given annotator
     @Query("SELECT a.id FROM AnnotationSession a WHERE a.annotator = :annotator")
     Set<Long> findAllIdsByAnnotator(@Param("annotator") Annotator annotator);
+
+    @Query("""
+                SELECT a.id
+                FROM AnnotationSession a
+                WHERE a.annotator = :annotator
+                  AND a.survey = :survey
+            """)
+    Set<Long> findAllIdsByAnnotatorAndSurvey(Annotator annotator, Survey survey);
+
+    Optional<AnnotationSession> findAnnotationSessionByReadingSessionAndSurveyAndAnnotator(ReadingSession readingSession, Survey survey, Annotator annotator);
 
     @Query("""
                 SELECT COUNT(f)

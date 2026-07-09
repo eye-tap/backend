@@ -1,13 +1,16 @@
 package ch.ethz.eyetap.service;
 
 import ch.ethz.eyetap.dto.*;
+import ch.ethz.eyetap.dto.progress.ProgressDto;
 import ch.ethz.eyetap.model.User;
 import ch.ethz.eyetap.model.annotation.AnnotationSession;
 import ch.ethz.eyetap.model.annotation.MachineAnnotation;
 import ch.ethz.eyetap.model.annotation.ReadingSession;
 import ch.ethz.eyetap.model.annotation.Text;
 import ch.ethz.eyetap.model.survey.Survey;
+import ch.ethz.eyetap.model.survey.SurveyType;
 import ch.ethz.eyetap.repository.*;
+import ch.ethz.eyetap.service.statistics.ProgressService;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 import jakarta.transaction.Transactional;
@@ -38,8 +41,15 @@ public class SurveyService {
     private final AnnotationSessionRepository annotationSessionRepository;
     private final FixationRepository fixationRepository;
 
+    private final ProgressService progressService;
+
     @PersistenceContext
     private EntityManager entityManager;
+
+    public Survey findOrThrow(Long id) {
+        return this.surveyRepository.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+    }
 
     @Transactional
     @CacheEvict(value = "surveys_all", allEntries = true)
@@ -266,6 +276,23 @@ public class SurveyService {
                 .collect(Collectors.toSet());
     }
 
+    @Cacheable("surveys_public")
+    @Transactional
+    public Set<ShallowSurveyDto> getPublic() {
+        return this.surveyRepository.findAllBySurveyType(SurveyType.PUBLIC)
+                .stream()
+                .map(survey -> new ShallowSurveyDto(survey.getId(),
+                        survey.getTitle(),
+                        survey.getDescription(),
+                        this.calculateProgress(survey.getId()))).collect(Collectors.toSet());
+    }
+
+    private ProgressDto calculateProgress(Long id) {
+        // todo 9.7.2026: replace this with per survey statistics
+        return this.progressService.getProgress().toBuilder().build();
+    }
+
+
     @CacheEvict(value = "surveys_all", allEntries = true)
     public void delete(Long id) {
         Survey survey = this.getById(id);
@@ -289,5 +316,12 @@ public class SurveyService {
             int annotationCount,
             int invalidFixationCount
     ) {
+    }
+
+    public Survey findOrThrowIfNotPresentOrNotPublic(Long surveyId) {
+        Survey survey = this.findOrThrow(surveyId);
+        if (!survey.getSurveyType().equals(SurveyType.PUBLIC))
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "There exists no public survey associated with the provided id");
+        return survey;
     }
 }

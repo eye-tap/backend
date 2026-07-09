@@ -7,11 +7,14 @@ import ch.ethz.eyetap.model.User;
 import ch.ethz.eyetap.model.annotation.*;
 import ch.ethz.eyetap.model.survey.Survey;
 import ch.ethz.eyetap.repository.AnnotationSessionRepository;
+import ch.ethz.eyetap.repository.SurveyRepository;
 import ch.ethz.eyetap.repository.UserAnnotationRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.time.LocalDateTime;
 import java.util.*;
@@ -26,9 +29,39 @@ public class AnnotationSessionService {
     private final AnnotationSessionRepository annotationSessionRepository;
     private final UserAnnotationRepository userAnnotationRepository;
     private final EntityMapper entityMapper;
+    private final SurveyRepository surveyRepository;
 
     public Set<Long> annotationSessionIdsByUserId(Annotator annotator) {
         return this.annotationSessionRepository.findAllIdsByAnnotator(annotator);
+    }
+
+    public Set<Long> annotationSessionIdsByUserAndSurvey(Annotator annotator, Survey survey) {
+        return this.annotationSessionRepository.findAllIdsByAnnotatorAndSurvey(annotator, survey);
+    }
+
+    private Optional<AnnotationSession> annotationSessionByAnnotatorAndSurveyAndReadingSession(Annotator annotator, Survey survey, ReadingSession readingSession) {
+        return this.annotationSessionRepository.findAnnotationSessionByReadingSessionAndSurveyAndAnnotator(readingSession, survey, annotator);
+    }
+
+    public AnnotationSession getOrCreate(Annotator annotator, Survey survey, ReadingSession readingSession) {
+        Optional<AnnotationSession> annotationSession = annotationSessionByAnnotatorAndSurveyAndReadingSession(annotator, survey, readingSession);
+        if (annotationSession.isPresent()) return annotationSession.get();
+
+        if (!survey.getDataSet().equals(readingSession.getText().getDataSet()))
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "This reading session doesn't match the data set that is associated with the provided survey");
+
+        AnnotationSession session = this.initialize(survey, annotator.getUser(), readingSession);
+
+        AnnotationSession save = this.annotationSessionRepository.save(session);
+        Set<AnnotationSession> annotationSessions = survey.getAnnotationSessions();
+        annotationSessions.add(save);
+        survey.setAnnotationSessions(annotationSessions);
+        Set<User> users = survey.getUsers();
+        users.add(annotator.getUser());
+        this.surveyRepository.save(survey);
+
+        return save;
+
     }
 
     public UserSurveyProgressDto getAnnotationSessionsUserId(Long userId, Annotator annotator) {

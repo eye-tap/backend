@@ -56,4 +56,5 @@ public interface EntityMapper {
     ReadingSessionDto toReadingSessionDto(ReadingSession readingSession);
 
     TextDto toTextDto(Text text);
+
 }
