@@ -50,14 +50,7 @@ public class SurveyService {
         long t1 = System.nanoTime();
         Map<String, String> surveyUsers = new HashMap<>();
         Set<User> userSet = new HashSet<>();
-        List<String> pseudonyms = new ArrayList<>();
-        for (int i = 0; i < createSurveyDto.users().intValue(); i++) {
-            String pseudonym;
-            do {
-                pseudonym = this.pseudonymeGeneratorService.generatePseudonym();
-            } while (this.userRepository.existsByUsername(pseudonym));
-            pseudonyms.add(pseudonym);
-        }
+        List<String> pseudonyms = generateFreshPseudonyms(createSurveyDto.users().intValue());
         List<AuthService.SurveyParticipant> surveyParticipantsBatch = this.authService.createSurveyParticipantsBatch(pseudonyms);
         for (AuthService.SurveyParticipant participant : surveyParticipantsBatch) {
             surveyUsers.put(participant.user().getUsername(), participant.password());
@@ -158,6 +151,18 @@ public class SurveyService {
         log.info("Total survey creation took {} ms", (t10 - startTime) / 1_000_000);
 
         return surveyCreatedDto;
+    }
+
+    public List<String> generateFreshPseudonyms(int users) {
+        List<String> pseudonyms = new ArrayList<>();
+        for (int i = 0; i < users; i++) {
+            String pseudonym;
+            do {
+                pseudonym = this.pseudonymeGeneratorService.generatePseudonym();
+            } while (this.userRepository.existsByUsername(pseudonym));
+            pseudonyms.add(pseudonym);
+        }
+        return pseudonyms;
     }
 
 
