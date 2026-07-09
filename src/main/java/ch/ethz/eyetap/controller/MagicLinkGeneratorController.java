@@ -13,6 +13,7 @@ import ch.ethz.eyetap.repository.UserRepository;
 import ch.ethz.eyetap.service.AnnotationSessionService;
 import ch.ethz.eyetap.service.AuthService;
 import ch.ethz.eyetap.service.SurveyService;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
@@ -33,8 +34,9 @@ public class MagicLinkGeneratorController {
     private final AnnotationSessionRepository annotationSessionRepository;
 
     // todo: this is insecure as of now, fix later
+    @Transactional
     @PostMapping("/draw/{surveyId}")
-    public AuthService.SurveyParticipant draw(
+    public Map.Entry<String, String> draw(
             @RequestBody Set<Long> readingSessionIds,
             @PathVariable Long surveyId) {
         Survey survey = this.surveyService.getById(surveyId);
@@ -43,7 +45,7 @@ public class MagicLinkGeneratorController {
         AuthService.SurveyParticipant participant = surveyParticipantsBatch.getFirst();
 
         survey.getUsers().add(participant.user());
-        participant.user().setSurveys(Set.of(survey));
+        participant.user().setSurveys(new HashSet<>(List.of(survey)));
 
         User user = this.userRepository.save(participant.user());
         survey = this.surveyRepository.save(survey);
@@ -57,11 +59,14 @@ public class MagicLinkGeneratorController {
             annotationSessions.add(initialize);
         }
 
-        survey.setAnnotationSessions(annotationSessions);
+        survey.getAnnotationSessions().addAll(annotationSessions);
         this.annotationSessionRepository.saveAll(annotationSessions);
         this.surveyRepository.save(survey);
 
-        return participant;
+        return new AbstractMap.SimpleEntry<>(
+                participant.user().getUsername(),
+                participant.password()
+        );
     }
 
 }

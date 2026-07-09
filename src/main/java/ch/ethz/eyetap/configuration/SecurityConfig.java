@@ -46,6 +46,7 @@ public class SecurityConfig {
                 .requestMatchers("/actuator/health").permitAll()
                 .requestMatchers("/debug/**").permitAll()
                 .requestMatchers("/progress").permitAll()
+                .requestMatchers("/generator/**").permitAll()
                 .anyRequest().authenticated()
         );
 
