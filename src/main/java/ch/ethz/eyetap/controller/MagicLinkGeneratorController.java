@@ -56,6 +56,8 @@ public class MagicLinkGeneratorController {
             ReadingSession readingSession = this.readingSessionRepository.findById(readingSessionId)
                     .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Reading session with id " + readingSessionId + " not found."));
             AnnotationSession initialize = this.annotationSessionService.initialize(survey, user, readingSession);
+            initialize.setDescription(readingSession.getText().getTitle() + ", " + readingSession.getReader().getForeignId());
+
             annotationSessions.add(initialize);
         }
 
